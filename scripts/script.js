@@ -1,4 +1,11 @@
 // TODO: Centaur and Banana issue. Centaur hoofwhacks and THEN checks current space of banana.
+// TODO: Centaur and Coach issue. Coach's ability activates on any movement, not just main movement. (FIXED)
+// TODO: Cheerleader not tripping when landing on Baba Yaga's space. (FIXED)
+// TODO: Heckler needs to only work on a racer's turn, not every time they move.
+// TODO: Timing issues, need to add things to a queue. For example, if Duelist lands on Baba Yaga's space, a duel is called, one of them moves, but Duelist never trips. It depends on the order of the racers in the array
+
+// TODO: Do Huge Baby ability if they move onto someone's space.
+// TODO: Rework LegIt for Baba Yaga.
 
 class Racer {
     constructor(name, abilityName) {
@@ -12,16 +19,22 @@ class Racer {
     }
     startTurn() {
         console.log("----- " + this.name + " is starting their turn. -----");
-        // this.updateStatus();
+        this.updateStatus();
+
+        this.beforeMainMove();
+
         if (this.isTripped) {
-            console.log(this.name + " stands up and skips their Main Move.");
+            console.log(this.name + " stands up and skips their main move.");
             this.isTripped = false;
         } else {
             this.mainMove();
         }
+
+        this.updateStatus();
     }
     updateStatus() {
         let currentSpace = this.currentSpace;
+        let name = this.name;
 
         let isInLead = true;
         racers.forEach(function(racer) {
@@ -30,7 +43,6 @@ class Racer {
             }
         });
         this.isInLead = isInLead ? true : false;
-        console.log(this.isInLead);
 
         let isInLast = true;
         racers.forEach(function(racer) {
@@ -39,16 +51,17 @@ class Racer {
             }
         });
         this.isInLast = isInLast ? true : false;
-        console.log(this.isInLast);
 
         let isAlone = true;
         racers.forEach(function(racer) {
-            if (racer.currentSpace === currentSpace) {
+            if (racer.currentSpace === currentSpace && racer.name !== name) {
                 isAlone = false;
             }
         });
         this.isAlone = isAlone ? true : false;
-        console.log(this.isAlone);
+    }
+    beforeMainMove() {
+
     }
     mainMove() {
         console.log(this.name + " is doing their main move.");
@@ -58,33 +71,108 @@ class Racer {
         let randomNumber = Math.floor(Math.random() * 6) + 1;
         console.log(this.name + " rolls a " + randomNumber + ".");
 
-        this.move(randomNumber);
+        this.move(randomNumber, true);
     }
-    move(num) {
+    move(num, isMainMove) {
         let startingSpace = this.currentSpace;
-        this.currentSpace += num;
+        let moveModifier = this.checkForMoveModifier(startingSpace, isMainMove, num);
+
+        let totalMovement = num + moveModifier;
+
+        this.currentSpace += totalMovement;
 
         if (this.currentSpace < 0) {
             this.currentSpace = 0;
         }
 
-        console.log(this.name + " moves " + num + " spaces. Their current space is " + this.currentSpace + ".");
+        console.log(this.name + " moves " + totalMovement + " spaces. Their current space is " + this.currentSpace + ".");
 
         this.currentRacerMoveAbility();
         this.checkMoveAbilities(this.currentSpace, startingSpace);
     }
-    currentRacerMoveAbility() {}
-    checkMoveAbilities(currentSpace, startingSpace) {
-        if (racers.includes(banana) && this !== banana) {
-            if (startingSpace < banana.currentSpace && currentSpace > banana.currentSpace) {
-                banana.theSlip(this);
+    checkForMoveModifier(startingSpace, isMainMove, num) {
+        let moveModifier = 0;
+
+        if (racers.includes(coach)) {
+            if (startingSpace === coach.currentSpace && isMainMove) {
+                moveModifier += coach.goodHustle(this);
             }
         }
 
+        if (racers.includes(gunk)) {
+            if (this !== gunk) {
+                moveModifier += gunk.goopEm(this);
+            }        
+        }
+
+        if (racers.includes(hugeBaby)) {
+            if (this !== hugeBaby) {
+                if (startingSpace + num + moveModifier === hugeBaby.currentSpace && startingSpace + num + moveModifier !== 0) {
+                    moveModifier += hugeBaby.reallyHuge();
+                }
+            }        
+        }
+
+        return moveModifier;
+    }
+    currentRacerMoveAbility() {
+
+    }
+    checkMoveAbilities(currentSpace, startingSpace) {
+
+        let activatetheSlip = false;
+        if (racers.includes(banana) && this !== banana) {
+            if (startingSpace < banana.currentSpace && currentSpace > banana.currentSpace) {
+                activatetheSlip = true;
+                // banana.theSlip(this);
+            }
+        }
+
+        let activateLegIt = false;
         if (racers.includes(babaYaga) && this !== babaYaga) {
             if (currentSpace === babaYaga.currentSpace) {
-                babaYaga.legIt(this);
+                activateLegIt = true;
+                // babaYaga.legIt(this);
             }
+        } else if (racers.includes(babaYaga) && this === babaYaga) {
+            racers.forEach(function(racer) {
+                if (racer.currentSpace === babaYaga.currentSpace && racer !== babaYaga) {
+                    activateLegIt = true;
+                    // babaYaga.legIt(racer);
+                }
+            });
+        }
+
+        let activateDuel = false;
+        if (racers.includes(duelist) && this !== duelist) {
+            if (currentSpace === duelist.currentSpace) {
+                activateDuel = true;
+                // duelist.duel(this);
+            }
+        }
+
+        let activateSchadenfruede = false;
+        if (racers.includes(heckler)) {
+            if (Math.abs(currentSpace - startingSpace) <= 1) {
+                activateSchadenfruede = true;
+                // heckler.schadenfreude(this);
+            }
+        }
+
+        console.log(activatetheSlip, activateLegIt, activateDuel, activateSchadenfruede);
+
+        // Run the queue!
+        if (activatetheSlip) {
+            banana.theSlip(this);
+        }
+        if (activateLegIt) {
+            babaYaga.legIt(this);
+        }
+        if (activateDuel) {
+            duelist.duel(this);
+        }
+        if (activateSchadenfruede) {
+            heckler.schadenfreude(this);
         }
     }
     trip() {
@@ -106,7 +194,7 @@ class Alchemist extends Racer {
             randomNumber = 4;
         }
 
-        this.move(randomNumber);
+        this.move(randomNumber, true);
     }
 };
 
@@ -163,7 +251,7 @@ class Blimp extends Racer {
             randomNumber -= 1;
         }
 
-        this.move(randomNumber);
+        this.move(randomNumber, true);
     }
 }
 
@@ -174,15 +262,19 @@ blimpBtn.addEventListener('click', function() {
 });
 
 class Centaur extends Racer {
-    move(num) {
+    move(num, isMainMove) {
         let startingSpace = this.currentSpace;
-        this.currentSpace += num;
+        let moveModifier = this.checkForMoveModifier(startingSpace, isMainMove, num);
+
+        let totalMovement = num + moveModifier;
+
+        this.currentSpace += totalMovement;
 
         if (this.currentSpace < 0) {
             this.currentSpace = 0;
         }
 
-        console.log(this.name + " moves " + num + " spaces. Their current space is " + this.currentSpace + ".");
+        console.log(this.name + " moves " + totalMovement + " spaces. Their current space is " + this.currentSpace + ".");
 
         racers.forEach(function(racer) {
             if (racer.currentSpace > centaur.currentSpace - num && racer.currentSpace < centaur.currentSpace) {
@@ -196,7 +288,7 @@ class Centaur extends Racer {
 
     hoofwhack(racer) {
         console.log(centaur.name + " uses " + centaur.abilityName + " to kick " + racer.name + " back 2 spaces.");
-        racer.move(-2);
+        racer.move(-2, false);
     }
 }
 
@@ -206,15 +298,34 @@ centaurBtn.addEventListener('click', function() {
     centaur.startTurn();
 });
 
+class Cheerleader extends Racer {
+    beforeMainMove() {
+        let doesAbilityActivate = false;
+        console.log(cheerleader.name + "'s " + this.abilityName + " causes all racers in last place to move 2 spaces.");
+        racers.forEach(function(racer) {
+            if (racer.isInLast) {
+                racer.move(2, false);
+                doesAbilityActivate = true;
+            };
+        });
+
+        if (doesAbilityActivate) {
+            console.log(cheerleader.name + "'s " + this.abilityName + " causes Cheerleader to move 1 space.");
+            cheerleader.move(1, false);
+        }
+    }
+}
+
+let cheerleader = new Cheerleader("Cheerleader", "Rah Rah");
+let cheerleaderBtn = document.querySelector(".js_cheerleader");
+cheerleaderBtn.addEventListener('click', function() {
+    cheerleader.startTurn();
+});
+
 class Coach extends Racer {
-    roll() {
-        let randomNumber = Math.floor(Math.random() * 6) + 1;
-        console.log(this.name + " rolls a " + randomNumber + ".");
-
-        console.log(this.name + "'s " + this.abilityName + " adds 1 to their move.");
-        randomNumber += 1;
-
-        this.move(randomNumber);
+    goodHustle() {
+        console.log(coach.name + "'s " + this.abilityName + " adds 1 to their move.");
+        return 1;
     }
 }
 
@@ -233,6 +344,106 @@ copyCatBtn.addEventListener('click', function() {
     copyCat.startTurn();
 });
 
+class Dicemonger extends Racer {
+}
+
+let dicemonger = new Dicemonger("Dicemonger", "Dicey Deals");
+let dicemongerBtn = document.querySelector(".js_dicemonger");
+dicemongerBtn.addEventListener('click', function() {
+    dicemonger.startTurn();
+});
+
+class Duelist extends Racer {
+    duel(racer) {
+        console.log("Duelist initiates a DUEL against " + racer.name + ".");
+
+        let duelistRoll = Math.floor(Math.random() * 6) + 1;
+        console.log(duelist.name + " rolls a " + duelistRoll + " for the duel.");
+
+        let otherRoll = Math.floor(Math.random() * 6) + 1;
+        console.log(racer.name + " rolls a " + otherRoll + " for the duel.");
+
+        if (duelistRoll >= otherRoll) {
+            console.log(duelist.name + " wins the duel and moves 2 spaces.");
+            duelist.move(2, false);
+        } else {
+            console.log(racer.name + " wins the duel and moves 2 spaces.");
+            racer.move(2, false);
+        }
+    }
+
+    currentRacerMoveAbility() {
+        racers.forEach(function(racer) {
+            if (racer.currentSpace === duelist.currentSpace && racer !== duelist) {
+                duelist.duel(racer);
+            }
+        });
+    }
+}
+
+let duelist = new Duelist("Duelist", "DUEL!");
+let duelistBtn = document.querySelector(".js_duelist");
+duelistBtn.addEventListener('click', function() {
+    duelist.startTurn();
+});
+
+class Egg extends Racer {
+}
+
+let egg = new Egg("Egg", "Scramble");
+let eggBtn = document.querySelector(".js_egg");
+eggBtn.addEventListener('click', function() {
+    egg.startTurn();
+});
+
+class Genius extends Racer {
+}
+
+let genius = new Genius("Genius", "Think Good");
+let geniusBtn = document.querySelector(".js_genius");
+geniusBtn.addEventListener('click', function() {
+    genius.startTurn();
+});
+
+class Gunk extends Racer {
+    goopEm() {
+        console.log(gunk.name + "'s " + this.abilityName + " subtracts 1 from their move.");
+        return -1;
+    }
+}
+
+let gunk = new Gunk("Gunk", "Goop'Em");
+let gunkBtn = document.querySelector(".js_gunk");
+gunkBtn.addEventListener('click', function() {
+    gunk.startTurn();
+});
+
+class Heckler extends Racer {
+    schadenfreude(racer) {
+        console.log(heckler.name + " uses " + this.abilityName + " towards " + racer.name + " to move 2 spaces.");
+        heckler.move(2, false);
+    }
+}
+
+let heckler = new Heckler("Heckler", "Schadenfreude");
+let hecklerBtn = document.querySelector(".js_heckler");
+hecklerBtn.addEventListener('click', function() {
+    heckler.startTurn();
+});
+
+class HugeBaby extends Racer {
+    reallyHuge() {
+        console.log(this.name + "'s " + this.abilityName + " stops them from landing on their space.");
+        return -1;
+    }
+}
+
+let hugeBaby = new HugeBaby("Huge Baby", "Really Huge");
+let hugeBabyBtn = document.querySelector(".js_huge-baby");
+hugeBabyBtn.addEventListener('click', function() {
+    hugeBaby.startTurn();
+});
 
 
-let racers = [blimp, centaur, alchemist, coach, babaYaga, banana];
+
+let racers = [babaYaga, duelist];
