@@ -17,6 +17,7 @@ class Racer {
         this.isInLast = true;
         this.isAlone = false;
         this.skipMainMove = false;
+        this.src = "./img/racers/racer_" + name.toLowerCase() + ".png";
     }
     startTurn() {
         console.log("----- " + this.name + " is starting their turn. -----");
@@ -457,7 +458,7 @@ class Hare extends Racer {
 
         console.log(this.name + " rolls a " + numberRolled + ".");
         console.log(this.name + "'s " + this.abilityName + " adds 2 to their move.");
-        
+
         numberRolled += 2;
 
         return numberRolled;
@@ -496,6 +497,15 @@ hugeBabyBtn.addEventListener('click', function() {
     hugeBaby.startTurn();
 });
 
+let racers = [duelist, banana, centaur, dicemonger, coach, hare];
 
+putRacersOnTrack();
+function putRacersOnTrack() {
+    racers.forEach(function(racer) {
+        let newImage = document.createElement('img');
+        newImage.src = racer.src;
+        newImage.classList.add("racer");
 
-let racers = [duelist, babaYaga, banana, centaur, copyCat, dicemonger, coach];
+        document.querySelector(".js_start").appendChild(newImage);
+    });
+}

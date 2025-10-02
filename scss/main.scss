@@ -1,0 +1,27 @@
+.track {
+    margin: 3rem auto;
+    max-width: 1200px;
+    // padding: 3rem;
+    border: 2px solid blue;
+    display: flex;
+
+    &__space {
+        flex-grow: 1;
+        border: 2px solid black;
+        height: 100px;
+        text-align: center;
+        font-size: larger;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &--start {
+            flex-grow: 3;
+        }
+    }
+}
+
+.racer {
+    width: 50px;
+    max-height: 100%;
+}
