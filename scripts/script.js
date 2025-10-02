@@ -2,10 +2,10 @@
 // TODO: Centaur and Coach issue. Coach's ability activates on any movement, not just main movement. (FIXED)
 // TODO: Cheerleader not tripping when landing on Baba Yaga's space. (FIXED)
 // TODO: Heckler needs to only work on a racer's turn, not every time they move.
-// TODO: Timing issues, need to add things to a queue. For example, if Duelist lands on Baba Yaga's space, a duel is called, one of them moves, but Duelist never trips. It depends on the order of the racers in the array
+// TODO: Timing issues, need to add things to a queue. For example, if Duelist lands on Baba Yaga's space, a duel is called, one of them moves, but Duelist never trips. It depends on the order of the racers in the array. (FIXED)
 
-// TODO: Do Huge Baby ability if they move onto someone's space.
-// TODO: Rework LegIt for Baba Yaga.
+// TODO: Do Huge Baby ability if they move onto someone's space. (FIXED)
+// TODO: Rework LegIt for Baba Yaga. (FIXED)
 
 class Racer {
     constructor(name, abilityName) {
@@ -16,14 +16,17 @@ class Racer {
         this.isInLead = true;
         this.isInLast = true;
         this.isAlone = false;
+        this.skipMainMove = false;
     }
     startTurn() {
         console.log("----- " + this.name + " is starting their turn. -----");
-        this.updateStatus();
 
+        this.updateStatus();
         this.beforeMainMove();
 
-        if (this.isTripped) {
+        if (this.skipMainMove) {
+            this.skipMainMove = false;
+        } else if (this.isTripped) {
             console.log(this.name + " stands up and skips their main move.");
             this.isTripped = false;
         } else {
@@ -32,6 +35,8 @@ class Racer {
 
         this.updateStatus();
     }
+
+    // Update if racer is in the lead, in last, and or alone
     updateStatus() {
         let currentSpace = this.currentSpace;
         let name = this.name;
@@ -65,19 +70,20 @@ class Racer {
     }
     mainMove() {
         console.log(this.name + " is doing their main move.");
-        this.roll();
+        let numberRolled = this.roll();
+        this.move(numberRolled, true);
     }
     roll() {
-        let randomNumber = Math.floor(Math.random() * 6) + 1;
-        console.log(this.name + " rolls a " + randomNumber + ".");
+        let numberRolled = Math.floor(Math.random() * 6) + 1;
+        console.log(this.name + " rolls a " + numberRolled + ".");
 
-        this.move(randomNumber, true);
+        return numberRolled;
     }
-    move(num, isMainMove) {
+    move(numberRolled, isMainMove) {
         let startingSpace = this.currentSpace;
-        let moveModifier = this.checkForMoveModifier(startingSpace, isMainMove, num);
-
-        let totalMovement = num + moveModifier;
+        let racer = this;
+        let moveModifier = this.checkForMoveModifier(startingSpace, isMainMove, numberRolled);
+        let totalMovement = numberRolled + moveModifier;
 
         this.currentSpace += totalMovement;
 
@@ -87,21 +93,23 @@ class Racer {
 
         console.log(this.name + " moves " + totalMovement + " spaces. Their current space is " + this.currentSpace + ".");
 
-        this.currentRacerMoveAbility();
-        this.checkMoveAbilities(this.currentSpace, startingSpace);
+        this.checkOtherMoveAbilities(racer, this.currentSpace, startingSpace);
+
+        this.updateStatus();
     }
+    // Check to see if any abilities would affect how much the racer moves
     checkForMoveModifier(startingSpace, isMainMove, num) {
         let moveModifier = 0;
 
         if (racers.includes(coach)) {
             if (startingSpace === coach.currentSpace && isMainMove) {
-                moveModifier += coach.goodHustle(this);
+                moveModifier += coach.goodHustle();
             }
         }
 
         if (racers.includes(gunk)) {
             if (this !== gunk) {
-                moveModifier += gunk.goopEm(this);
+                moveModifier += gunk.goopEm();
             }        
         }
 
@@ -115,39 +123,49 @@ class Racer {
 
         return moveModifier;
     }
-    currentRacerMoveAbility() {
+    // Check to see if my ability triggered while moving or when I stopped
+    myMoveAbility() {
 
     }
-    checkMoveAbilities(currentSpace, startingSpace) {
+    // Check to see if any abilities triggered while racer was moving or when they stopped moving
+    checkOtherMoveAbilities(movingRacer, currentSpace, startingSpace) {
 
         let activatetheSlip = false;
-        if (racers.includes(banana) && this !== banana) {
+        if (racers.includes(banana) && movingRacer !== banana) {
             if (startingSpace < banana.currentSpace && currentSpace > banana.currentSpace) {
                 activatetheSlip = true;
-                // banana.theSlip(this);
             }
         }
 
         let activateLegIt = false;
-        if (racers.includes(babaYaga) && this !== babaYaga) {
-            if (currentSpace === babaYaga.currentSpace) {
+        let legItTargetArray = [];
+        if (racers.includes(babaYaga)) {
+            if (movingRacer === babaYaga) {
+                racers.forEach(function(arrayRacer) {
+                    if (arrayRacer.currentSpace === babaYaga.currentSpace && arrayRacer !== babaYaga) {
+                        activateLegIt = true;
+                        legItTargetArray.push(arrayRacer);
+                    }
+                })
+            } else if (currentSpace === babaYaga.currentSpace) {
                 activateLegIt = true;
-                // babaYaga.legIt(this);
+                legItTargetArray.push(movingRacer);
             }
-        } else if (racers.includes(babaYaga) && this === babaYaga) {
-            racers.forEach(function(racer) {
-                if (racer.currentSpace === babaYaga.currentSpace && racer !== babaYaga) {
-                    activateLegIt = true;
-                    // babaYaga.legIt(racer);
-                }
-            });
         }
 
         let activateDuel = false;
-        if (racers.includes(duelist) && this !== duelist) {
-            if (currentSpace === duelist.currentSpace) {
+        let duelistTarget = "";
+        if (racers.includes(duelist)) {
+            if (movingRacer === duelist) {
+                racers.forEach(function(arrayRacer) {
+                    if (arrayRacer.currentSpace === duelist.currentSpace && arrayRacer !== duelist) {
+                        activateDuel = true;
+                        duelistTarget = arrayRacer;
+                    }
+                })
+            } else if (currentSpace === duelist.currentSpace) {
                 activateDuel = true;
-                // duelist.duel(this);
+                duelistTarget = movingRacer;
             }
         }
 
@@ -155,24 +173,38 @@ class Racer {
         if (racers.includes(heckler)) {
             if (Math.abs(currentSpace - startingSpace) <= 1) {
                 activateSchadenfruede = true;
-                // heckler.schadenfreude(this);
             }
         }
 
-        console.log(activatetheSlip, activateLegIt, activateDuel, activateSchadenfruede);
+        let activateReallyHuge = false;
+        if (racers.includes(hugeBaby) && movingRacer === hugeBaby) {
+            racers.forEach(function(arrayRacer) {
+                if (arrayRacer.currentSpace === hugeBaby.currentSpace && arrayRacer !== hugeBaby) {
+                    console.log(this.name + "'s " + this.abilityName + " stops them from being on the same space.");
+                    arrayRacer.move(-1, false);
+                }
+            })
+        }
 
-        // Run the queue!
+        this.myMoveAbility(currentSpace, startingSpace);
+
+        this.runTheQueue(movingRacer, activatetheSlip, activateLegIt, legItTargetArray, activateDuel, duelistTarget, activateSchadenfruede);
+    }
+    // Let all abilities queue up first so that none are missed, then run all in order
+    runTheQueue(movingRacer, activatetheSlip, activateLegIt, legItTargetArray, activateDuel, duelistTarget, activateSchadenfruede) {
         if (activatetheSlip) {
-            banana.theSlip(this);
+            banana.theSlip(movingRacer);
         }
         if (activateLegIt) {
-            babaYaga.legIt(this);
+            legItTargetArray.forEach(function(target) {
+                babaYaga.legIt(target);
+            });
         }
         if (activateDuel) {
-            duelist.duel(this);
+            duelist.duel(duelistTarget);
         }
         if (activateSchadenfruede) {
-            heckler.schadenfreude(this);
+            heckler.schadenfreude(movingRacer);
         }
     }
     trip() {
@@ -180,21 +212,21 @@ class Racer {
         console.log(this.name + " trips.");
     }
     warp(space) {
-
+        this.currentSpace = space;
     }
 };
 
 class Alchemist extends Racer {
     roll() {
-        let randomNumber = Math.floor(Math.random() * 6) + 1;
-        console.log(this.name + " rolls a " + randomNumber + ".");
+        let numberRolled = Math.floor(Math.random() * 6) + 1;
+        console.log(this.name + " rolls a " + numberRolled + ".");
 
-        if (randomNumber < 3) {
-            console.log(this.name + " uses " + this.abilityName + " to turn the " + randomNumber + " into a 4.");
-            randomNumber = 4;
+        if (numberRolled < 3) {
+            console.log(this.name + " uses " + this.abilityName + " to turn the " + numberRolled + " into a 4.");
+            numberRolled = 4;
         }
 
-        this.move(randomNumber, true);
+        return numberRolled;
     }
 };
 
@@ -208,14 +240,6 @@ class BabaYaga extends Racer {
     legIt(racer) {
         console.log(this.name + "'s " + this.abilityName + " causes " + racer.name + " to trip.")
         racer.trip();
-    }
-
-    currentRacerMoveAbility() {
-        racers.forEach(function(racer) {
-            if (racer.currentSpace === babaYaga.currentSpace && racer !== babaYaga) {
-                babaYaga.legIt(racer);
-            }
-        });
     }
 };
 
@@ -262,28 +286,22 @@ blimpBtn.addEventListener('click', function() {
 });
 
 class Centaur extends Racer {
-    move(num, isMainMove) {
-        let startingSpace = this.currentSpace;
-        let moveModifier = this.checkForMoveModifier(startingSpace, isMainMove, num);
 
-        let totalMovement = num + moveModifier;
-
-        this.currentSpace += totalMovement;
-
-        if (this.currentSpace < 0) {
-            this.currentSpace = 0;
-        }
-
-        console.log(this.name + " moves " + totalMovement + " spaces. Their current space is " + this.currentSpace + ".");
-
+    myMoveAbility(currentSpace, startingSpace) {
+        let activateHoofwhack = false;
+        let hoofwhackTargetArray = [];
         racers.forEach(function(racer) {
-            if (racer.currentSpace > centaur.currentSpace - num && racer.currentSpace < centaur.currentSpace) {
-                centaur.hoofwhack(racer);
+            if (startingSpace < racer.currentSpace && currentSpace > racer.currentSpace) {
+                activateHoofwhack = true;
+                hoofwhackTargetArray.push(racer);
             }
         });
 
-        this.currentRacerMoveAbility();
-        this.checkMoveAbilities(this.currentSpace, startingSpace);
+        if (activateHoofwhack) {
+            hoofwhackTargetArray.forEach(function(target) {
+                centaur.hoofwhack(target);
+            });
+        }
     }
 
     hoofwhack(racer) {
@@ -372,13 +390,13 @@ class Duelist extends Racer {
         }
     }
 
-    currentRacerMoveAbility() {
-        racers.forEach(function(racer) {
-            if (racer.currentSpace === duelist.currentSpace && racer !== duelist) {
-                duelist.duel(racer);
-            }
-        });
-    }
+    // currentRacerMoveAbility() {
+    //     racers.forEach(function(racer) {
+    //         if (racer.currentSpace === duelist.currentSpace && racer !== duelist) {
+    //             duelist.duel(racer);
+    //         }
+    //     });
+    // }
 }
 
 let duelist = new Duelist("Duelist", "DUEL!");
@@ -394,6 +412,15 @@ let egg = new Egg("Egg", "Scramble");
 let eggBtn = document.querySelector(".js_egg");
 eggBtn.addEventListener('click', function() {
     egg.startTurn();
+});
+
+class FlipFlop extends Racer {
+}
+
+let flipFlop = new FlipFlop("Flip Flop", "Flop Flip");
+let flipFlopBtn = document.querySelector(".js_flip-flop");
+flipFlopBtn.addEventListener('click', function() {
+    flipFlop.startTurn();
 });
 
 class Genius extends Racer {
@@ -418,6 +445,31 @@ gunkBtn.addEventListener('click', function() {
     gunk.startTurn();
 });
 
+class Hare extends Racer {
+    beforeMainMove() {
+        if (this.isInLead && this.isAlone) {
+            console.log(this.name + "'s " + this.abilityName + " makes them skip their main move.");
+            this.skipMainMove = true;
+        }
+    }
+    roll() {
+        let numberRolled = Math.floor(Math.random() * 6) + 1;
+
+        console.log(this.name + " rolls a " + numberRolled + ".");
+        console.log(this.name + "'s " + this.abilityName + " adds 2 to their move.");
+        
+        numberRolled += 2;
+
+        return numberRolled;
+    }
+}
+
+let hare = new Hare("Hare", "Hubris");
+let hareBtn = document.querySelector(".js_hare");
+hareBtn.addEventListener('click', function() {
+    hare.startTurn();
+});
+
 class Heckler extends Racer {
     schadenfreude(racer) {
         console.log(heckler.name + " uses " + this.abilityName + " towards " + racer.name + " to move 2 spaces.");
@@ -433,7 +485,7 @@ hecklerBtn.addEventListener('click', function() {
 
 class HugeBaby extends Racer {
     reallyHuge() {
-        console.log(this.name + "'s " + this.abilityName + " stops them from landing on their space.");
+        console.log(this.name + "'s " + this.abilityName + " stops them from being on the same space.");
         return -1;
     }
 }
@@ -446,4 +498,4 @@ hugeBabyBtn.addEventListener('click', function() {
 
 
 
-let racers = [babaYaga, duelist];
+let racers = [duelist, babaYaga, banana, centaur, copyCat, dicemonger, coach];
