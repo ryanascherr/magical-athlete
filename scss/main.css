@@ -2,23 +2,41 @@
   margin: 3rem auto;
   max-width: 1200px;
   border: 2px solid blue;
-  display: flex;
+  display: grid;
+}
+.track--start {
+  grid-template-columns: 2fr repeat(10, 1fr);
+}
+.track--rtl {
+  direction: rtl;
+  grid-template-columns: repeat(10, 1fr);
+}
+.track--end {
+  grid-template-columns: repeat(9, 1fr) 2fr;
 }
 .track__space {
-  flex-grow: 1;
   border: 2px solid black;
-  height: 100px;
   text-align: center;
   font-size: larger;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-.track__space--start {
-  flex-grow: 3;
+  min-height: 75px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 75px), 75px));
 }
 
 .racer {
-  width: 50px;
+  max-width: 100%;
   max-height: 100%;
+}
+.racer--tripped {
+  transform: rotate(180deg);
+}
+.racer--face-left {
+  transform: scaleX(-1);
+}
+
+.racer.racer--tripped.racer--face-left {
+  transform: rotate(180deg) scaleX(-1);
 }/*# sourceMappingURL=main.css.map */

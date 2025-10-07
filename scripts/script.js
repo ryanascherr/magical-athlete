@@ -6,6 +6,7 @@
 
 // TODO: Do Huge Baby ability if they move onto someone's space. (FIXED)
 // TODO: Rework LegIt for Baba Yaga. (FIXED)
+// TODO: Duelist issue with tripping while he is dueling. Image does not flip but he IS tripped and will skip next turn.
 
 class Racer {
     constructor(name, abilityName) {
@@ -28,8 +29,7 @@ class Racer {
         if (this.skipMainMove) {
             this.skipMainMove = false;
         } else if (this.isTripped) {
-            console.log(this.name + " stands up and skips their main move.");
-            this.isTripped = false;
+            this.standUp();
         } else {
             this.mainMove();
         }
@@ -90,13 +90,48 @@ class Racer {
 
         if (this.currentSpace < 0) {
             this.currentSpace = 0;
+        } else if (this.currentSpace > 30) {
+            this.currentSpace = 30;
         }
 
         console.log(this.name + " moves " + totalMovement + " spaces. Their current space is " + this.currentSpace + ".");
 
+        let racerImage = document.querySelectorAll("[data-name='" + this.name + "']");
+        racerImage = racerImage[0];
+        racerImage.remove();
+
+        this.placeRacer();
+
+        if (this.currentSpace >= 11 && this.currentSpace <= 20) {
+            this.faceLeft();
+        } else {
+            this.faceRight();
+        }
+
         this.checkOtherMoveAbilities(racer, this.currentSpace, startingSpace);
 
         this.updateStatus();
+    }
+    placeRacer() {
+        let newImage = document.createElement('img');
+        newImage.src = this.src;
+        newImage.classList.add("racer");
+        newImage.dataset.name = this.name;
+
+        let spaceToPlace = document.querySelector("[data-space='" + this.currentSpace + "']");
+        // spaceToPlace = spaceToPlace[0];
+
+        spaceToPlace.appendChild(newImage);
+    }
+    faceLeft() {
+        let racerImage = document.querySelectorAll("[data-name='" + this.name + "']");
+        racerImage = racerImage[0];
+        racerImage.classList.add("racer--face-left");
+    }
+    faceRight() {
+        let racerImage = document.querySelectorAll("[data-name='" + this.name + "']");
+        racerImage = racerImage[0];
+        racerImage.classList.remove("racer--face-left");
     }
     // Check to see if any abilities would affect how much the racer moves
     checkForMoveModifier(startingSpace, isMainMove, num) {
@@ -211,6 +246,19 @@ class Racer {
     trip() {
         this.isTripped = true;
         console.log(this.name + " trips.");
+
+        let racerImage = document.querySelectorAll("[data-name='" + this.name + "']");
+        racerImage = racerImage[0];
+        racerImage.classList.add("racer--tripped");
+
+    }
+    standUp() {
+        console.log(this.name + " stands up and skips their main move.");
+        this.isTripped = false;
+
+        let racerImage = document.querySelectorAll("[data-name='" + this.name + "']");
+        racerImage = racerImage[0];
+        racerImage.classList.remove("racer--tripped");
     }
     warp(space) {
         this.currentSpace = space;
@@ -390,14 +438,6 @@ class Duelist extends Racer {
             racer.move(2, false);
         }
     }
-
-    // currentRacerMoveAbility() {
-    //     racers.forEach(function(racer) {
-    //         if (racer.currentSpace === duelist.currentSpace && racer !== duelist) {
-    //             duelist.duel(racer);
-    //         }
-    //     });
-    // }
 }
 
 let duelist = new Duelist("Duelist", "DUEL!");
@@ -497,7 +537,10 @@ hugeBabyBtn.addEventListener('click', function() {
     hugeBaby.startTurn();
 });
 
-let racers = [duelist, banana, centaur, dicemonger, coach, hare];
+let racers = [banana, centaur, coach, dicemonger, duelist, hare];
+let numberOfRacers = racers.length;
+let racerWidth = 100 / numberOfRacers;
+let spaces = document.querySelectorAll(".track__space");
 
 putRacersOnTrack();
 function putRacersOnTrack() {
@@ -505,6 +548,7 @@ function putRacersOnTrack() {
         let newImage = document.createElement('img');
         newImage.src = racer.src;
         newImage.classList.add("racer");
+        newImage.dataset.name = racer.name;
 
         document.querySelector(".js_start").appendChild(newImage);
     });
