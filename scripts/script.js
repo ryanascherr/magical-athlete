@@ -1,12 +1,6 @@
-// TODO: Centaur and Banana issue. Centaur hoofwhacks and THEN checks current space of banana.
-// TODO: Centaur and Coach issue. Coach's ability activates on any movement, not just main movement. (FIXED)
-// TODO: Cheerleader not tripping when landing on Baba Yaga's space. (FIXED)
 // TODO: Heckler needs to only work on a racer's turn, not every time they move.
-// TODO: Timing issues, need to add things to a queue. For example, if Duelist lands on Baba Yaga's space, a duel is called, one of them moves, but Duelist never trips. It depends on the order of the racers in the array. (FIXED)
-
-// TODO: Do Huge Baby ability if they move onto someone's space. (FIXED)
-// TODO: Rework LegIt for Baba Yaga. (FIXED)
 // TODO: Duelist issue with tripping while he is dueling. Image does not flip but he IS tripped and will skip next turn.
+// TODO: Leadtoad only works on first track.
 
 class Racer {
     constructor(name, abilityName) {
@@ -72,13 +66,36 @@ class Racer {
     mainMove() {
         console.log(this.name + " is doing their main move.");
         let numberRolled = this.roll();
-        this.move(numberRolled, true);
+
+        let canMove = this.rollCheck(numberRolled);
+
+        if (canMove) {
+            let finalNumber = numberRolled + this.diceMod(numberRolled);
+            this.move(finalNumber, true);
+        }
     }
     roll() {
         let numberRolled = Math.floor(Math.random() * 6) + 1;
         console.log(this.name + " rolls a " + numberRolled + ".");
 
         return numberRolled;
+    }
+    rollCheck(numberRolled) {
+        let canMove = true;
+
+        if (racers.includes(inchworm) && numberRolled === 1 && this !== inchworm) {
+            inchworm.wriggle(this);
+            canMove = false;
+        }
+
+        if (racers.includes(lackey) && numberRolled === 6 && this !== lackey) {
+            lackey.veryGoodSire();
+        }
+
+        return canMove;
+    }
+    diceMod(numberRolled) {
+        return 0;
     }
     move(numberRolled, isMainMove) {
         let startingSpace = this.currentSpace;
@@ -157,6 +174,12 @@ class Racer {
             }        
         }
 
+        if (racers.includes(leaptoad) && this === leaptoad) {
+            if (startingSpace === leaptoad.currentSpace && isMainMove) {
+                moveModifier += leaptoad.jumpfrog(startingSpace, num);
+            }
+        }
+
         return moveModifier;
     }
     // Check to see if my ability triggered while moving or when I stopped
@@ -220,6 +243,21 @@ class Racer {
                     arrayRacer.move(-1, false);
                 }
             })
+        }
+
+        let activateAhLove = false;
+        let numberOnSpace = 1;
+        let otherRacer = "";
+        if (racers.includes(romantic)) {
+            racers.forEach(function(arrayRacer) {
+                if (movingRacer.currentSpace === arrayRacer.currentSpace && movingRacer !== arrayRacer) {
+                    otherRacer = arrayRacer;
+                    numberOnSpace++;
+                }
+            })
+            if (numberOnSpace === 2) {
+                romantic.ahLove(movingRacer, otherRacer);
+            }
         }
 
         this.myMoveAbility(currentSpace, startingSpace);
@@ -312,19 +350,14 @@ bananaBtn.addEventListener('click', function() {
 });
 
 class Blimp extends Racer {
-    roll() {
-        let randomNumber = Math.floor(Math.random() * 6) + 1;
-        console.log(this.name + " rolls a " + randomNumber + ".");
-
+    diceMod() {
         if (this.currentSpace < 15) {
             console.log(this.name + "'s " + this.abilityName + " adds 3 to their move.");
-            randomNumber += 3;
+            return 3;
         } else {
             console.log(this.name + "'s " + this.abilityName + " subtracts 1 from their move.");
-            randomNumber -= 1;
+            return -1;
         }
-
-        this.move(randomNumber, true);
     }
 }
 
@@ -493,15 +526,12 @@ class Hare extends Racer {
             this.skipMainMove = true;
         }
     }
-    roll() {
-        let numberRolled = Math.floor(Math.random() * 6) + 1;
-
-        console.log(this.name + " rolls a " + numberRolled + ".");
+    diceMod() {
         console.log(this.name + "'s " + this.abilityName + " adds 2 to their move.");
 
-        numberRolled += 2;
+        let diceMod = 2;
 
-        return numberRolled;
+        return diceMod;
     }
 }
 
@@ -537,7 +567,119 @@ hugeBabyBtn.addEventListener('click', function() {
     hugeBaby.startTurn();
 });
 
-let racers = [banana, centaur, coach, dicemonger, duelist, hare];
+class Inchworm extends Racer {
+    wriggle(racer) {
+        console.log(inchworm.name + "'s Wriggle stops " + racer.name + " from moving.");
+        inchworm.move(1, false);
+    }
+}
+
+let inchworm = new Inchworm("Inchworm", "Wriggle");
+let inchwormBtn = document.querySelector(".js_inchworm");
+inchwormBtn.addEventListener('click', function() {
+    inchworm.startTurn();
+});
+
+class Lackey extends Racer {
+    veryGoodSire() {
+        console.log(lackey.name + "'s Very Good Sire lets him move.");
+        lackey.move(2, false);
+    }
+}
+
+let lackey = new Lackey("Lackey", "Very Good Sire");
+let lackeyBtn = document.querySelector(".js_lackey");
+lackeyBtn.addEventListener('click', function() {
+    lackey.startTurn();
+});
+
+class Leaptoad extends Racer {
+    jumpfrog(startingSpace, num) {
+        let endingSpace = startingSpace + num;
+        if (endingSpace > 30) {
+            endingSpace = 30;
+        }
+
+        // console.log(startingSpace, endingSpace);
+
+        let spacesSkipped = 0;
+
+        // for (let i = 0; i < array.length; i++) {
+        //     const element = array[i];
+            
+        // }
+
+        let trackSpaces = document.querySelectorAll(".track__space");
+        // console.log(trackSpaces);
+        let distance = endingSpace - startingSpace;
+
+        // runTheLoop();
+        // function runTheLoop() {
+            for (let i = startingSpace + 1; i < distance; i++) {
+                let space = trackSpaces[i];
+                if (space.querySelector('img')) {
+                    spacesSkipped++;
+                    distance++;
+                    // console.log("skipping space " + i);
+                }
+            }
+
+        // }
+
+        // for (let i = startingSpace + 1; i < endingSpace - startingSpace; i++) {
+        //     let space = trackSpaces[i];
+        //     if (space.querySelector('img')) {
+        //         spacesSkipped++;
+        //         console.log("skipping space " + i);
+        //     }
+        // }
+
+        // trackSpaces.forEach(function(space) {
+        //     const imageChild = space.querySelector('img');
+        // if (imageChild) {
+        //     console.log('The element has an image child.');
+        // } else {
+        //     console.log('The element does not have an image child.');
+        // }
+        // })
+
+        let spaceArray = [];
+
+        // racers.forEach(function(racer) {
+        //     if (racer !== leaptoad && racer.currentSpace > startingSpace && racer.currentSpace <= endingSpace && !spaceArray.includes(racer.currentSpace)) {
+        //         spaceArray.push(racer.currentSpace);
+        //         spacesSkipped++;
+        //     }
+        // })
+
+        if (spacesSkipped !== 0) {
+            console.log(leaptoad.name + "'s " + this.abilityName + " lets them skip over " + spacesSkipped + " spaces.");
+        }
+
+        return spacesSkipped;
+    }
+}
+
+let leaptoad = new Leaptoad("Leaptoad", "Jumpfrog");
+let leaptoadBtn = document.querySelector(".js_leaptoad");
+leaptoadBtn.addEventListener('click', function() {
+    leaptoad.startTurn();
+});
+
+class Romantic extends Racer {
+    ahLove(racer1, racer2) {
+        console.log(romantic.name + "'s Ah, Love! lets her move because " + racer1.name + " and " + racer2.name + " are alone on a space together.");
+        romantic.move(2, false);
+    }
+}
+
+let romantic = new Romantic("Romantic", "Ah, Love!");
+let romanticBtn = document.querySelector(".js_romantic");
+romanticBtn.addEventListener('click', function() {
+    romantic.startTurn();
+});
+
+let racers = [banana, dicemonger, inchworm, lackey, leaptoad, romantic];
 let numberOfRacers = racers.length;
 let racerWidth = 100 / numberOfRacers;
 let spaces = document.querySelectorAll(".track__space");

@@ -13,7 +13,7 @@
 .track {
   margin: 3rem auto;
   max-width: 1200px;
-  border: 2px solid blue;
+  border: 1px solid black;
   display: grid;
 }
 .track--start {
@@ -35,6 +35,7 @@
   align-items: center;
   justify-content: center;
   min-height: 75px;
+  height: 195.39px;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 75px), 75px));
 }
