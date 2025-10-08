@@ -1,3 +1,15 @@
+* {
+    font-family: sans-serif;
+}
+
+:root {
+    --blue: #5D9DD5;
+    --pink: #D883B6;
+    --yellow: #FDBC2E;
+    --green: #4DA245;
+    --red: #F04B23;
+}
+
 .track {
     margin: 3rem auto;
     max-width: 1200px;
@@ -19,6 +31,7 @@
     }
 
     &__space {
+        position: relative;
         // flex-grow: 1;
         border: 2px solid black;
         // height: 100px;
@@ -32,9 +45,54 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(min(100%, 75px), 75px));
 
-        // &--start {
-        //     flex-grow: 3;
-        // }
+        &--pink {
+            background-color: var(--pink);
+        }
+
+        &--yellow {
+            background-color: var(--yellow);
+        }
+
+        &--blue {
+            background-color: var(--blue);
+        }
+
+        &--green {
+            background-color: var(--green);
+        }
+
+        &--red {
+            background-color: var(--red);
+        }
+    }
+
+    &__number {
+        font-size: 3rem;
+        -webkit-text-stroke: 2px black;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+
+        &--blue {
+            color: var(--blue);
+        }
+
+        &--pink {
+            color: var(--pink);
+        }
+
+        &--green {
+            color: var(--green);
+        }
+
+        &--yellow {
+            color: var(--yellow);
+        }
+
+        &--red {
+            color: var(--red);
+        }
     }
 }
 
@@ -42,6 +100,7 @@
     // width: 50px;
     max-width: 100%;
     max-height: 100%;
+    z-index: 1;
 
     &--tripped {
         transform: rotate(180deg);
