@@ -8,8 +8,9 @@
     --yellow: #FDBC2E;
     --green: #4DA245;
     --red: #F04B23;
-    --dice-size: 50px;
-    --font-size: 16px;
+    --purple: #A98CC1;
+    --dice-size: 5rem;
+    --font-size: 5rem;
 }
 
 .track {
@@ -126,6 +127,10 @@
     height: var(--dice-size);
     transition: all .75s ease-out;
     margin: 25px;
+
+    &:hover {
+        cursor: pointer;
+    }
 }
 
 .face {
@@ -134,14 +139,15 @@
     left: 0;
     width: var(--dice-size);
     height: var(--dice-size);
-    background-color: black;
-    border: 1px solid gray;
-    color: white;
+    background-color: var(--purple);
+    border: 2px solid black;
+    border-radius: 10px;
+    color: var(--red);
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: calc(var(--dice-size)/2);
-    /* transition: .5s; */
+    font-size: var(--font-size);
+    -webkit-text-stroke: 2px black;
 }
 
 /* 3D Object Orientation */

@@ -3,6 +3,7 @@
 // TODO: Leadtoad only works on first track.
 
 let univCurrentRacer = "";
+let univCurrentRacerIndex = 0;
 
 class Racer {
     constructor(name, abilityName) {
@@ -93,7 +94,7 @@ class Racer {
                 racer.move(finalNumber, true);
             }
 
-        }, 750);
+        }, rollTime);
     }
     roll() {
         let die = document.querySelector(".cube");
@@ -170,6 +171,9 @@ class Racer {
         let newImage = document.createElement('img');
         newImage.src = this.src;
         newImage.classList.add("racer");
+        if (this.isTripped) {
+            newImage.classList.add("racer--tripped");
+        }
         newImage.dataset.name = this.name;
 
         let spaceToPlace = document.querySelector("[data-space='" + this.currentSpace + "']");
@@ -211,8 +215,8 @@ class Racer {
             }        
         }
 
-        if (racers.includes(leaptoad) && this === leaptoad) {
-            if (startingSpace === leaptoad.currentSpace && isMainMove) {
+        if (this === leaptoad) {
+            if (isMainMove) {
                 moveModifier += leaptoad.jumpfrog(startingSpace, num);
             }
         }
@@ -637,58 +641,18 @@ class Leaptoad extends Racer {
         if (endingSpace > 30) {
             endingSpace = 30;
         }
-
-        // console.log(startingSpace, endingSpace);
-
         let spacesSkipped = 0;
-
-        // for (let i = 0; i < array.length; i++) {
-        //     const element = array[i];
-            
-        // }
-
         let trackSpaces = document.querySelectorAll(".track__space");
-        // console.log(trackSpaces);
         let distance = endingSpace - startingSpace;
 
-        // runTheLoop();
-        // function runTheLoop() {
-            for (let i = startingSpace + 1; i < distance; i++) {
-                let space = trackSpaces[i];
-                if (space.querySelector('img')) {
-                    spacesSkipped++;
-                    distance++;
-                    // console.log("skipping space " + i);
-                }
+        for (let i = startingSpace + 1; i < distance + startingSpace + 1; i++) {
+            let space = trackSpaces[i];
+            
+            if (space.querySelector('img') && i < 30) {
+                spacesSkipped++;
+                distance++;
             }
-
-        // }
-
-        // for (let i = startingSpace + 1; i < endingSpace - startingSpace; i++) {
-        //     let space = trackSpaces[i];
-        //     if (space.querySelector('img')) {
-        //         spacesSkipped++;
-        //         console.log("skipping space " + i);
-        //     }
-        // }
-
-        // trackSpaces.forEach(function(space) {
-        //     const imageChild = space.querySelector('img');
-        // if (imageChild) {
-        //     console.log('The element has an image child.');
-        // } else {
-        //     console.log('The element does not have an image child.');
-        // }
-        // })
-
-        let spaceArray = [];
-
-        // racers.forEach(function(racer) {
-        //     if (racer !== leaptoad && racer.currentSpace > startingSpace && racer.currentSpace <= endingSpace && !spaceArray.includes(racer.currentSpace)) {
-        //         spaceArray.push(racer.currentSpace);
-        //         spacesSkipped++;
-        //     }
-        // })
+        }
 
         if (spacesSkipped !== 0) {
             console.log(leaptoad.name + "'s " + this.abilityName + " lets them skip over " + spacesSkipped + " spaces.");
@@ -717,7 +681,7 @@ romanticBtn.addEventListener('click', function() {
     romantic.startTurn();
 });
 
-let racers = [banana, dicemonger, inchworm, lackey, leaptoad, romantic];
+let racers = [banana, dicemonger, inchworm, lackey, leaptoad];
 let numberOfRacers = racers.length;
 let racerWidth = 100 / numberOfRacers;
 let spaces = document.querySelectorAll(".track__space");
@@ -725,7 +689,7 @@ let spaces = document.querySelectorAll(".track__space");
 init()
 function init() {
     putRacersOnTrack();
-    setFirstRacer();
+    setNextTurn();
 }
 
 function putRacersOnTrack() {
@@ -739,19 +703,14 @@ function putRacersOnTrack() {
     });
 }
 
-function setFirstRacer() {
-    racers[0].setMyTurn();
-}
-
 let isDiceRolling = false;
 let roll = 0;
-let rollTime = 750;
+let rollTime = 0;
 let modifier = 0;
 let numberOfDice = 2;
 let log = [];
 let isLogShown = true;
 let style = "classic";
-let univCurrentRacerIndex = 0;
 
 document.querySelector(".cube").addEventListener('click', () => {
     univCurrentRacer.mainMove();
@@ -760,10 +719,9 @@ document.querySelector(".cube").addEventListener('click', () => {
 function setNextTurn() {
     univCurrentRacerIndex++;
 
-    if (univCurrentRacerIndex + 1 === racers.length) {
-        racers[0].setMyTurn();
-        univCurrentRacerIndex = 0;
-    } else {
-        racers[univCurrentRacerIndex].setMyTurn();
+    if (univCurrentRacerIndex === racers.length + 1) {
+        univCurrentRacerIndex = 1;
     }
+
+    racers[univCurrentRacerIndex-1].setMyTurn();
 }
