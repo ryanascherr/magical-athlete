@@ -1,6 +1,4 @@
 // TODO: Heckler needs to only work on a racer's turn, not every time they move.
-// TODO: Duelist issue with tripping while he is dueling. Image does not flip but he IS tripped and will skip next turn.
-// TODO: Leadtoad only works on first track.
 
 let univCurrentRacer = "";
 let univCurrentRacerIndex = 0;
@@ -16,7 +14,7 @@ class Racer {
         this.isAlone = false;
         this.skipMainMove = false;
         this.isMyTurn = false;
-        this.src = "./img/racers/racer_" + name.toLowerCase() + ".png";
+        this.src = "./img/racers/racer_" + name.toLowerCase().split(' ').join('-') + ".png";
     }
     setMyTurn() {
         racers.forEach(function(racer) {
@@ -37,11 +35,15 @@ class Racer {
 
         if (this.skipMainMove) {
             this.skipMainMove = false;
+
+            if (racers.includes(heckler)) {
+                heckler.schadenfreude(this);
+            }
+
+            setNextTurn();
         } else if (this.isTripped) {
             this.standUp();
             setNextTurn();
-        } else {
-            // this.mainMove();
         }
 
         this.updateStatus();
@@ -159,7 +161,7 @@ class Racer {
             this.faceRight();
         }
 
-        this.checkOtherMoveAbilities(racer, this.currentSpace, startingSpace);
+        this.checkOtherMoveAbilities(racer, this.currentSpace, startingSpace, isMainMove);
 
         this.updateStatus();
 
@@ -212,7 +214,14 @@ class Racer {
                 if (startingSpace + num + moveModifier === hugeBaby.currentSpace && startingSpace + num + moveModifier !== 0) {
                     moveModifier += hugeBaby.reallyHuge();
                 }
-            }        
+            } else {
+                racers.forEach(function(arrayRacer) {
+                    if (arrayRacer.currentSpace === hugeBaby.currentSpace + num && arrayRacer !== hugeBaby) {
+                        console.log(hugeBaby.name + "'s " + hugeBaby.abilityName + " stops " + arrayRacer.name + " from being on the same space.");
+                        arrayRacer.move(-1, false);
+                    }
+                })
+            }    
         }
 
         if (this === leaptoad) {
@@ -228,7 +237,7 @@ class Racer {
 
     }
     // Check to see if any abilities triggered while racer was moving or when they stopped moving
-    checkOtherMoveAbilities(movingRacer, currentSpace, startingSpace) {
+    checkOtherMoveAbilities(movingRacer, currentSpace, startingSpace, isMainMove) {
 
         let activatetheSlip = false;
         if (racers.includes(banana) && movingRacer !== banana) {
@@ -271,19 +280,9 @@ class Racer {
 
         let activateSchadenfruede = false;
         if (racers.includes(heckler)) {
-            if (Math.abs(currentSpace - startingSpace) <= 1) {
+            if (Math.abs(currentSpace - startingSpace) <= 1 && isMainMove) {
                 activateSchadenfruede = true;
             }
-        }
-
-        let activateReallyHuge = false;
-        if (racers.includes(hugeBaby) && movingRacer === hugeBaby) {
-            racers.forEach(function(arrayRacer) {
-                if (arrayRacer.currentSpace === hugeBaby.currentSpace && arrayRacer !== hugeBaby) {
-                    console.log(this.name + "'s " + this.abilityName + " stops them from being on the same space.");
-                    arrayRacer.move(-1, false);
-                }
-            })
         }
 
         let activateAhLove = false;
@@ -346,10 +345,22 @@ class Racer {
 
 class Alchemist extends Racer {
     roll() {
+        let die = document.querySelector(".cube");
         let numberRolled = Math.floor(Math.random() * 6) + 1;
+        let numberAsString = JSON.stringify(numberRolled);
         console.log(this.name + " rolls a " + numberRolled + ".");
 
-        if (numberRolled < 3) {
+        if (die.classList.contains("low")) {
+            die.className = "";
+            die.classList.add("cube", "high");
+            die.classList.add("face-" + numberAsString + "-high");
+        } else {
+            die.className = "";
+            die.classList.add("cube", "low");
+            die.classList.add("face-" + numberAsString + "-low");
+        }
+
+         if (numberRolled < 3) {
             console.log(this.name + " uses " + this.abilityName + " to turn the " + numberRolled + " into a 4.");
             numberRolled = 4;
         }
@@ -357,12 +368,7 @@ class Alchemist extends Racer {
         return numberRolled;
     }
 };
-
 let alchemist = new Alchemist("Alchemist", "Transmute 'n' Scoot");
-let alchemistBtn = document.querySelector(".js_alchemist");
-alchemistBtn.addEventListener('click', function() {
-    alchemist.startTurn();
-});
 
 class BabaYaga extends Racer {
     legIt(racer) {
@@ -370,12 +376,7 @@ class BabaYaga extends Racer {
         racer.trip();
     }
 };
-
 let babaYaga = new BabaYaga("Baba Yaga", "Leg It");
-let babaYagaBtn = document.querySelector(".js_baba-yaga");
-babaYagaBtn.addEventListener('click', function() {
-    babaYaga.startTurn();
-});
 
 class Banana extends Racer {
     theSlip(racer) {
@@ -383,12 +384,7 @@ class Banana extends Racer {
         racer.trip();
     }
 };
-
 let banana = new Banana("Banana", "The Slip");
-let bananaBtn = document.querySelector(".js_banana");
-bananaBtn.addEventListener('click', function() {
-    banana.startTurn();
-});
 
 class Blimp extends Racer {
     diceMod() {
@@ -401,12 +397,7 @@ class Blimp extends Racer {
         }
     }
 }
-
 let blimp = new Blimp("Blimp", "Blow It");
-let blimpBtn = document.querySelector(".js_blimp");
-blimpBtn.addEventListener('click', function() {
-    blimp.startTurn();
-});
 
 class Centaur extends Racer {
 
@@ -432,12 +423,7 @@ class Centaur extends Racer {
         racer.move(-2, false);
     }
 }
-
 let centaur = new Centaur("Centaur", "Hoofwhack");
-let centaurBtn = document.querySelector(".js_centaur");
-centaurBtn.addEventListener('click', function() {
-    centaur.startTurn();
-});
 
 class Cheerleader extends Racer {
     beforeMainMove() {
@@ -456,12 +442,7 @@ class Cheerleader extends Racer {
         }
     }
 }
-
 let cheerleader = new Cheerleader("Cheerleader", "Rah Rah");
-let cheerleaderBtn = document.querySelector(".js_cheerleader");
-cheerleaderBtn.addEventListener('click', function() {
-    cheerleader.startTurn();
-});
 
 class Coach extends Racer {
     goodHustle() {
@@ -469,30 +450,15 @@ class Coach extends Racer {
         return 1;
     }
 }
-
 let coach = new Coach("Coach", "Good Hustle");
-let coachBtn = document.querySelector(".js_coach");
-coachBtn.addEventListener('click', function() {
-    coach.startTurn();
-});
 
 class CopyCat extends Racer {
 }
-
 let copyCat = new CopyCat("Copy Cat", "Copy That");
-let copyCatBtn = document.querySelector(".js_copy-cat");
-copyCatBtn.addEventListener('click', function() {
-    copyCat.startTurn();
-});
 
 class Dicemonger extends Racer {
 }
-
 let dicemonger = new Dicemonger("Dicemonger", "Dicey Deals");
-let dicemongerBtn = document.querySelector(".js_dicemonger");
-dicemongerBtn.addEventListener('click', function() {
-    dicemonger.startTurn();
-});
 
 class Duelist extends Racer {
     duel(racer) {
@@ -513,39 +479,19 @@ class Duelist extends Racer {
         }
     }
 }
-
 let duelist = new Duelist("Duelist", "DUEL!");
-let duelistBtn = document.querySelector(".js_duelist");
-duelistBtn.addEventListener('click', function() {
-    duelist.startTurn();
-});
 
 class Egg extends Racer {
 }
-
 let egg = new Egg("Egg", "Scramble");
-let eggBtn = document.querySelector(".js_egg");
-eggBtn.addEventListener('click', function() {
-    egg.startTurn();
-});
 
 class FlipFlop extends Racer {
 }
-
 let flipFlop = new FlipFlop("Flip Flop", "Flop Flip");
-let flipFlopBtn = document.querySelector(".js_flip-flop");
-flipFlopBtn.addEventListener('click', function() {
-    flipFlop.startTurn();
-});
 
 class Genius extends Racer {
 }
-
 let genius = new Genius("Genius", "Think Good");
-let geniusBtn = document.querySelector(".js_genius");
-geniusBtn.addEventListener('click', function() {
-    genius.startTurn();
-});
 
 class Gunk extends Racer {
     goopEm() {
@@ -553,12 +499,7 @@ class Gunk extends Racer {
         return -1;
     }
 }
-
 let gunk = new Gunk("Gunk", "Goop'Em");
-let gunkBtn = document.querySelector(".js_gunk");
-gunkBtn.addEventListener('click', function() {
-    gunk.startTurn();
-});
 
 class Hare extends Racer {
     beforeMainMove() {
@@ -575,12 +516,7 @@ class Hare extends Racer {
         return diceMod;
     }
 }
-
 let hare = new Hare("Hare", "Hubris");
-let hareBtn = document.querySelector(".js_hare");
-hareBtn.addEventListener('click', function() {
-    hare.startTurn();
-});
 
 class Heckler extends Racer {
     schadenfreude(racer) {
@@ -588,12 +524,7 @@ class Heckler extends Racer {
         heckler.move(2, false);
     }
 }
-
 let heckler = new Heckler("Heckler", "Schadenfreude");
-let hecklerBtn = document.querySelector(".js_heckler");
-hecklerBtn.addEventListener('click', function() {
-    heckler.startTurn();
-});
 
 class HugeBaby extends Racer {
     reallyHuge() {
@@ -601,12 +532,7 @@ class HugeBaby extends Racer {
         return -1;
     }
 }
-
 let hugeBaby = new HugeBaby("Huge Baby", "Really Huge");
-let hugeBabyBtn = document.querySelector(".js_huge-baby");
-hugeBabyBtn.addEventListener('click', function() {
-    hugeBaby.startTurn();
-});
 
 class Inchworm extends Racer {
     wriggle(racer) {
@@ -615,12 +541,7 @@ class Inchworm extends Racer {
         setNextTurn();
     }
 }
-
 let inchworm = new Inchworm("Inchworm", "Wriggle");
-let inchwormBtn = document.querySelector(".js_inchworm");
-inchwormBtn.addEventListener('click', function() {
-    inchworm.startTurn();
-});
 
 class Lackey extends Racer {
     veryGoodSire() {
@@ -628,12 +549,7 @@ class Lackey extends Racer {
         lackey.move(2, false);
     }
 }
-
 let lackey = new Lackey("Lackey", "Very Good Sire");
-let lackeyBtn = document.querySelector(".js_lackey");
-lackeyBtn.addEventListener('click', function() {
-    lackey.startTurn();
-});
 
 class Leaptoad extends Racer {
     jumpfrog(startingSpace, num) {
@@ -647,7 +563,7 @@ class Leaptoad extends Racer {
 
         for (let i = startingSpace + 1; i < distance + startingSpace + 1; i++) {
             let space = trackSpaces[i];
-            
+
             if (space.querySelector('img') && i < 30) {
                 spacesSkipped++;
                 distance++;
@@ -661,12 +577,7 @@ class Leaptoad extends Racer {
         return spacesSkipped;
     }
 }
-
 let leaptoad = new Leaptoad("Leaptoad", "Jumpfrog");
-let leaptoadBtn = document.querySelector(".js_leaptoad");
-leaptoadBtn.addEventListener('click', function() {
-    leaptoad.startTurn();
-});
 
 class Romantic extends Racer {
     ahLove(racer1, racer2) {
@@ -674,14 +585,9 @@ class Romantic extends Racer {
         romantic.move(2, false);
     }
 }
-
 let romantic = new Romantic("Romantic", "Ah, Love!");
-let romanticBtn = document.querySelector(".js_romantic");
-romanticBtn.addEventListener('click', function() {
-    romantic.startTurn();
-});
 
-let racers = [banana, dicemonger, inchworm, lackey, leaptoad];
+let racers = [hugeBaby, hare, heckler, inchworm];
 let numberOfRacers = racers.length;
 let racerWidth = 100 / numberOfRacers;
 let spaces = document.querySelectorAll(".track__space");
@@ -705,7 +611,7 @@ function putRacersOnTrack() {
 
 let isDiceRolling = false;
 let roll = 0;
-let rollTime = 0;
+let rollTime = 750;
 let modifier = 0;
 let numberOfDice = 2;
 let log = [];
@@ -713,6 +619,13 @@ let isLogShown = true;
 let style = "classic";
 
 document.querySelector(".cube").addEventListener('click', () => {
+    if (isDiceRolling) return;
+    isDiceRolling = true;
+
+    setTimeout(function(){
+        isDiceRolling = false;
+    }, rollTime);
+
     univCurrentRacer.mainMove();
 });
 
