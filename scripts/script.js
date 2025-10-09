@@ -2,6 +2,8 @@
 // TODO: Duelist issue with tripping while he is dueling. Image does not flip but he IS tripped and will skip next turn.
 // TODO: Leadtoad only works on first track.
 
+let univCurrentRacer = "";
+
 class Racer {
     constructor(name, abilityName) {
         this.name = name;
@@ -12,7 +14,19 @@ class Racer {
         this.isInLast = true;
         this.isAlone = false;
         this.skipMainMove = false;
+        this.isMyTurn = false;
         this.src = "./img/racers/racer_" + name.toLowerCase() + ".png";
+    }
+    setMyTurn() {
+        racers.forEach(function(racer) {
+            racer.isMyTurn = false;
+        })
+
+        this.isMyTurn = true;
+        univCurrentRacer = this;
+        document.querySelector(".js_turn-text").textContent = "It is " + this.name + "'s turn.";
+
+        this.startTurn();
     }
     startTurn() {
         console.log("----- " + this.name + " is starting their turn. -----");
@@ -24,8 +38,9 @@ class Racer {
             this.skipMainMove = false;
         } else if (this.isTripped) {
             this.standUp();
+            setNextTurn();
         } else {
-            this.mainMove();
+            // this.mainMove();
         }
 
         this.updateStatus();
@@ -67,16 +82,34 @@ class Racer {
         console.log(this.name + " is doing their main move.");
         let numberRolled = this.roll();
 
-        let canMove = this.rollCheck(numberRolled);
+        let racer = this;
 
-        if (canMove) {
-            let finalNumber = numberRolled + this.diceMod(numberRolled);
-            this.move(finalNumber, true);
-        }
+        setTimeout(function() {
+
+            let canMove = racer.rollCheck(numberRolled);
+
+            if (canMove) {
+                let finalNumber = numberRolled + racer.diceMod(numberRolled);
+                racer.move(finalNumber, true);
+            }
+
+        }, 750);
     }
     roll() {
+        let die = document.querySelector(".cube");
         let numberRolled = Math.floor(Math.random() * 6) + 1;
+        let numberAsString = JSON.stringify(numberRolled);
         console.log(this.name + " rolls a " + numberRolled + ".");
+
+        if (die.classList.contains("low")) {
+            die.className = "";
+            die.classList.add("cube", "high");
+            die.classList.add("face-" + numberAsString + "-high");
+        } else {
+            die.className = "";
+            die.classList.add("cube", "low");
+            die.classList.add("face-" + numberAsString + "-low");
+        }
 
         return numberRolled;
     }
@@ -128,6 +161,10 @@ class Racer {
         this.checkOtherMoveAbilities(racer, this.currentSpace, startingSpace);
 
         this.updateStatus();
+
+        if (isMainMove) {
+            setNextTurn();
+        }
     }
     placeRacer() {
         let newImage = document.createElement('img');
@@ -571,6 +608,7 @@ class Inchworm extends Racer {
     wriggle(racer) {
         console.log(inchworm.name + "'s Wriggle stops " + racer.name + " from moving.");
         inchworm.move(1, false);
+        setNextTurn();
     }
 }
 
@@ -684,7 +722,12 @@ let numberOfRacers = racers.length;
 let racerWidth = 100 / numberOfRacers;
 let spaces = document.querySelectorAll(".track__space");
 
-putRacersOnTrack();
+init()
+function init() {
+    putRacersOnTrack();
+    setFirstRacer();
+}
+
 function putRacersOnTrack() {
     racers.forEach(function(racer) {
         let newImage = document.createElement('img');
@@ -694,4 +737,33 @@ function putRacersOnTrack() {
 
         document.querySelector(".js_start").appendChild(newImage);
     });
+}
+
+function setFirstRacer() {
+    racers[0].setMyTurn();
+}
+
+let isDiceRolling = false;
+let roll = 0;
+let rollTime = 750;
+let modifier = 0;
+let numberOfDice = 2;
+let log = [];
+let isLogShown = true;
+let style = "classic";
+let univCurrentRacerIndex = 0;
+
+document.querySelector(".cube").addEventListener('click', () => {
+    univCurrentRacer.mainMove();
+});
+
+function setNextTurn() {
+    univCurrentRacerIndex++;
+
+    if (univCurrentRacerIndex + 1 === racers.length) {
+        racers[0].setMyTurn();
+        univCurrentRacerIndex = 0;
+    } else {
+        racers[univCurrentRacerIndex].setMyTurn();
+    }
 }

@@ -8,6 +8,8 @@
   --yellow: #FDBC2E;
   --green: #4DA245;
   --red: #F04B23;
+  --dice-size: 50px;
+  --font-size: 16px;
 }
 
 .track {
@@ -92,4 +94,102 @@
 
 .racer.racer--tripped.racer--face-left {
   transform: rotate(180deg) scaleX(-1);
+}
+
+.cube {
+  position: relative;
+  transform-style: preserve-3d;
+  width: var(--dice-size);
+  height: var(--dice-size);
+  transition: all 0.75s ease-out;
+  margin: 25px;
+}
+
+.face {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--dice-size);
+  height: var(--dice-size);
+  background-color: black;
+  border: 1px solid gray;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: calc(var(--dice-size) / 2);
+  /* transition: .5s; */
+}
+
+/* 3D Object Orientation */
+.front {
+  transform: rotateY(0deg) translateZ(calc(var(--dice-size) / 2));
+}
+
+.back {
+  transform: rotateY(180deg) translateZ(calc(var(--dice-size) / 2));
+}
+
+.bottom {
+  transform: rotateX(-90deg) translateZ(calc(var(--dice-size) / 2));
+}
+
+.left {
+  transform: rotateY(-90deg) translateZ(calc(var(--dice-size) / 2));
+}
+
+.right {
+  transform: rotateY(90deg) translateZ(calc(var(--dice-size) / 2));
+}
+
+.top {
+  transform: rotateX(90deg) translateZ(calc(var(--dice-size) / 2));
+}
+
+.face-1-low {
+  transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+}
+
+.face-1-high {
+  transform: rotateX(360deg) rotateY(360deg) rotateZ(0deg);
+}
+
+.face-2-low {
+  transform: rotateX(90deg) rotateY(0deg) rotateZ(0deg);
+}
+
+.face-2-high {
+  transform: rotateX(450deg) rotateY(360deg) rotateZ(0deg);
+}
+
+.face-3-low {
+  transform: rotateX(0deg) rotateY(90deg) rotateZ(0deg);
+}
+
+.face-3-high {
+  transform: rotateX(360deg) rotateY(450deg) rotateZ(0deg);
+}
+
+.face-4-low {
+  transform: rotateX(0deg) rotateY(-90deg) rotateZ(0deg);
+}
+
+.face-4-high {
+  transform: rotateX(360deg) rotateY(-450deg) rotateZ(0deg);
+}
+
+.face-5-low {
+  transform: rotateX(-90deg) rotateY(0deg) rotateZ(0deg);
+}
+
+.face-5-high {
+  transform: rotateX(-450deg) rotateY(360deg) rotateZ(0deg);
+}
+
+.face-6-low {
+  transform: rotateX(0deg) rotateY(180deg) rotateZ(0deg);
+}
+
+.face-6-high {
+  transform: rotateX(360deg) rotateY(540deg) rotateZ(0deg);
 }/*# sourceMappingURL=main.css.map */
