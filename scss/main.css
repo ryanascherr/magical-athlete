@@ -92,6 +92,9 @@
 .racer--face-left {
   transform: scaleX(-1);
 }
+.racer--full-height {
+  height: 100%;
+}
 
 .racer.racer--tripped.racer--face-left {
   transform: rotate(180deg) scaleX(-1);

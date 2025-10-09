@@ -1,3 +1,6 @@
+// TODO: Make warp and others less clunky
+// TODO: Prevent 0 space movement
+
 let univCurrentRacer = "";
 let univCurrentRacerIndex = 0;
 
@@ -185,6 +188,11 @@ class Racer {
         newImage.classList.add("racer");
         if (this.isTripped) {
             newImage.classList.add("racer--tripped");
+        }
+        if (newImage.src.includes("baby") && this.currentSpace !== 0 && this.currentSpace !== 30) {
+            newImage.classList.add("racer--full-height");
+        } else {
+            newImage.classList.remove("racer--full-height");
         }
         newImage.dataset.name = this.name;
 
@@ -692,7 +700,7 @@ class Romantic extends Racer {
 }
 let romantic = new Romantic("Romantic", "Ah, Love!");
 
-let racers = [duelist, hypnotist];
+let racers = [hugeBaby, banana, duelist, babaYaga, dicemonger];
 let numberOfRacers = racers.length;
 let racerWidth = 100 / numberOfRacers;
 let spaces = document.querySelectorAll(".track__space");

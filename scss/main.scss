@@ -114,6 +114,10 @@
     &--face-left {
         transform: scaleX(-1);
     }
+
+    &--full-height {
+        height: 100%;
+    }
 }
 
 .racer.racer--tripped.racer--face-left {
