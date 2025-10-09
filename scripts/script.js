@@ -1,5 +1,3 @@
-// TODO: Heckler needs to only work on a racer's turn, not every time they move.
-
 let univCurrentRacer = "";
 let univCurrentRacerIndex = 0;
 
@@ -51,32 +49,44 @@ class Racer {
 
     // Update if racer is in the lead, in last, and or alone
     updateStatus() {
-        let currentSpace = this.currentSpace;
-        let name = this.name;
+        racers.forEach(function(racerOne) {
+            let isInLead = true;
+            let racerOneSpace = racerOne.currentSpace;
 
-        let isInLead = true;
-        racers.forEach(function(racer) {
-            if (racer.currentSpace > currentSpace) {
-                isInLead = false;
-            }
-        });
-        this.isInLead = isInLead ? true : false;
+            racers.forEach(function(racerTwo) {
+                if (racerTwo.currentSpace > racerOneSpace && racerOne !== racerTwo) {
+                    isInLead = false;
+                }
+            })
 
-        let isInLast = true;
-        racers.forEach(function(racer) {
-            if (racer.currentSpace < currentSpace) {
-                isInLast = false;
-            }
-        });
-        this.isInLast = isInLast ? true : false;
+            racerOne.isInLead = isInLead ? true : false;
+        })
 
-        let isAlone = true;
-        racers.forEach(function(racer) {
-            if (racer.currentSpace === currentSpace && racer.name !== name) {
-                isAlone = false;
-            }
-        });
-        this.isAlone = isAlone ? true : false;
+        racers.forEach(function(racerOne) {
+            let isInLast = true;
+            let racerOneSpace = racerOne.currentSpace;
+
+            racers.forEach(function(racerTwo) {
+                if (racerTwo.currentSpace < racerOneSpace && racerOne !== racerTwo) {
+                    isInLast = false;
+                }
+            })
+
+            racerOne.isInLast = isInLast ? true : false;
+        })
+
+        racers.forEach(function(racerOne) {
+            let isAlone = true;
+            let racerOneSpace = racerOne.currentSpace;
+
+            racers.forEach(function(racerTwo) {
+                if (racerTwo.currentSpace === racerOneSpace && racerOne !== racerTwo) {
+                    isAlone = false;
+                }
+            })
+
+            racerOne.isAlone = isAlone ? true : false;
+        })
     }
     beforeMainMove() {
 
@@ -340,6 +350,78 @@ class Racer {
     }
     warp(space) {
         this.currentSpace = space;
+
+        let racerImage = document.querySelectorAll("[data-name='" + this.name + "']");
+        racerImage = racerImage[0];
+        racerImage.remove();
+
+        this.placeRacer();
+
+        if (this.currentSpace >= 11 && this.currentSpace <= 20) {
+            this.faceLeft();
+        } else {
+            this.faceRight();
+        }
+
+        this.updateStatus();
+
+        let movingRacer = this;
+        let activateLegIt = false;
+        let legItTargetArray = [];
+        if (racers.includes(babaYaga)) {
+            if (movingRacer === babaYaga) {
+                console.log("1");
+                racers.forEach(function(arrayRacer) {
+                    if (arrayRacer.currentSpace === babaYaga.currentSpace && arrayRacer !== babaYaga) {
+                        activateLegIt = true;
+                        legItTargetArray.push(arrayRacer);
+                    }
+                })
+            } else if (currentSpace === babaYaga.currentSpace) {
+                activateLegIt = true;
+                legItTargetArray.push(movingRacer);
+            }
+        }
+
+        if (activateLegIt) {
+            legItTargetArray.forEach(function(target) {
+                babaYaga.legIt(target);
+            });
+        };
+
+        let numberOnSpace = 1;
+        let otherRacer = "";
+        if (racers.includes(romantic)) {
+            racers.forEach(function(arrayRacer) {
+                if (movingRacer.currentSpace === arrayRacer.currentSpace && movingRacer !== arrayRacer) {
+                    otherRacer = arrayRacer;
+                    numberOnSpace++;
+                }
+            })
+            if (numberOnSpace === 2) {
+                romantic.ahLove(movingRacer, otherRacer);
+            }
+        }
+
+        let activateDuel = false;
+        let duelistTarget = "";
+        if (racers.includes(duelist)) {
+            if (movingRacer === duelist) {
+                racers.forEach(function(arrayRacer) {
+                    if (arrayRacer.currentSpace === duelist.currentSpace && arrayRacer !== duelist) {
+                        activateDuel = true;
+                        duelistTarget = arrayRacer;
+                    }
+                })
+            } else if (currentSpace === duelist.currentSpace) {
+                activateDuel = true;
+                duelistTarget = movingRacer;
+            }
+        }
+
+        if (activateDuel) {
+            duelist.duel(duelistTarget);
+        }
     }
 };
 
@@ -534,6 +616,29 @@ class HugeBaby extends Racer {
 }
 let hugeBaby = new HugeBaby("Huge Baby", "Really Huge");
 
+class Hypnotist extends Racer {
+    beforeMainMove() {
+        if (!hypnotist.isInLead) {
+            this.hssssst();
+        }
+    }
+    hssssst() {
+        let racerInLead = "";
+        let foundALeadRacer = false;
+
+        racers.forEach(function(racer) {
+            if (racer.isInLead && !foundALeadRacer) {
+                racerInLead = racer;
+                foundALeadRacer = true;
+            }
+        })
+
+        console.log(this.name + "'s " + this.abilityName + " warps " + racerInLead.name + " to their space.");
+        racerInLead.warp(hypnotist.currentSpace);
+    }
+}
+let hypnotist = new Hypnotist("Hypnotist", "Hssssst");
+
 class Inchworm extends Racer {
     wriggle(racer) {
         console.log(inchworm.name + "'s Wriggle stops " + racer.name + " from moving.");
@@ -587,7 +692,7 @@ class Romantic extends Racer {
 }
 let romantic = new Romantic("Romantic", "Ah, Love!");
 
-let racers = [hugeBaby, hare, heckler, inchworm];
+let racers = [duelist, hypnotist];
 let numberOfRacers = racers.length;
 let racerWidth = 100 / numberOfRacers;
 let spaces = document.querySelectorAll(".track__space");
