@@ -14,7 +14,7 @@
 }
 
 .track {
-  margin: 3rem auto;
+  margin: 1rem auto;
   max-width: 1200px;
   border: 1px solid black;
   display: grid;
@@ -207,4 +207,31 @@
 
 .face-6-high {
   transform: rotateX(360deg) rotateY(540deg) rotateZ(0deg);
+}
+
+.history {
+  border: 2px solid black;
+  height: 200px;
+  overflow-y: scroll;
+  padding: 0.5rem;
+  max-width: 1200px;
+  margin: 1rem auto;
+}
+.history h2 {
+  margin-top: 0;
+}
+.history p {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.cards {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+.cards .card {
+  justify-self: center;
 }/*# sourceMappingURL=main.css.map */

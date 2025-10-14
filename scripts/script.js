@@ -1,8 +1,13 @@
 // TODO: Make warp and others less clunky
 // TODO: Prevent 0 space movement
+// TODO: Leadtoad rolling a 1 when right behind Huge Baby lets them land on a racer's space if they are right after Huge Baby
 
 let univCurrentRacer = "";
 let univCurrentRacerIndex = 0;
+let historyText = document.querySelector(".js_history-text");
+let firstPlace = "";
+let secondPlace = "";
+let isRaceOver = false;
 
 class Racer {
     constructor(name, abilityName) {
@@ -16,6 +21,9 @@ class Racer {
         this.skipMainMove = false;
         this.isMyTurn = false;
         this.src = "./img/racers/racer_" + name.toLowerCase().split(' ').join('-') + ".png";
+        this.cardSrc = "./img/cards/card_" + name.toLowerCase().split(' ').join('-') + ".png";
+        this.hasFinishedRace = false;
+        this.placement = "";
     }
     setMyTurn() {
         racers.forEach(function(racer) {
@@ -30,6 +38,7 @@ class Racer {
     }
     startTurn() {
         console.log("----- " + this.name + " is starting their turn. -----");
+        addHistoryText("----- " + this.name + " is starting their turn. -----");
 
         this.updateStatus();
         this.beforeMainMove();
@@ -96,11 +105,14 @@ class Racer {
     }
     mainMove() {
         console.log(this.name + " is doing their main move.");
+        addHistoryText(this.name + " is doing their main move.");
         let numberRolled = this.roll();
-
         let racer = this;
 
         setTimeout(function() {
+
+            console.log(racer.name + " rolls a " + numberRolled + ".");
+            addHistoryText(racer.name + " rolls a " + numberRolled + ".");
 
             let canMove = racer.rollCheck(numberRolled);
 
@@ -115,7 +127,6 @@ class Racer {
         let die = document.querySelector(".cube");
         let numberRolled = Math.floor(Math.random() * 6) + 1;
         let numberAsString = JSON.stringify(numberRolled);
-        console.log(this.name + " rolls a " + numberRolled + ".");
 
         if (die.classList.contains("low")) {
             die.className = "";
@@ -158,28 +169,49 @@ class Racer {
             this.currentSpace = 0;
         } else if (this.currentSpace > 30) {
             this.currentSpace = 30;
+            this.hasFinishedRace = true;
+            this.checkWin();
         }
 
-        console.log(this.name + " moves " + totalMovement + " spaces. Their current space is " + this.currentSpace + ".");
+        if (this.hasFinishedRace) {
+            console.log(racer.name + " moves " + totalMovement + " spaces and finishes the race in " + this.placement + " place!");
+            addHistoryText(racer.name + " moves " + totalMovement + " spaces and finishes the race in " + this.placement + " place!");
 
-        let racerImage = document.querySelectorAll("[data-name='" + this.name + "']");
-        racerImage = racerImage[0];
-        racerImage.remove();
+            let racerImage = document.querySelectorAll("[data-name='" + this.name + "']");
+            racerImage = racerImage[0];
+            racerImage.remove();
 
-        this.placeRacer();
+            this.removeFromRace();
 
-        if (this.currentSpace >= 11 && this.currentSpace <= 20) {
-            this.faceLeft();
+            if (isRaceOver) {
+                console.log("The race is over! " + firstPlace.name + " came in first and " + secondPlace.name + " came in second.");
+                addHistoryText(this.name + " moves " + totalMovement + " spaces. Their current space is " + this.currentSpace + ".");
+            }
         } else {
-            this.faceRight();
+            console.log(this.name + " moves " + totalMovement + " spaces. Their current space is " + this.currentSpace + ".");
+            addHistoryText(this.name + " moves " + totalMovement + " spaces. Their current space is " + this.currentSpace + ".");
+
+            let racerImage = document.querySelectorAll("[data-name='" + this.name + "']");
+            racerImage = racerImage[0];
+            racerImage.remove();
+
+            this.placeRacer();
+
+            if (this.currentSpace >= 11 && this.currentSpace <= 20) {
+                this.faceLeft();
+            } else {
+                this.faceRight();
+            }
+
+            this.checkOtherMoveAbilities(racer, this.currentSpace, startingSpace, isMainMove);
+
+            this.updateStatus();
         }
 
-        this.checkOtherMoveAbilities(racer, this.currentSpace, startingSpace, isMainMove);
-
-        this.updateStatus();
-
-        if (isMainMove) {
-            setNextTurn();
+        if (!isRaceOver) {
+            if (isMainMove) {
+                setNextTurn();
+            }
         }
     }
     placeRacer() {
@@ -236,6 +268,7 @@ class Racer {
                 racers.forEach(function(arrayRacer) {
                     if (arrayRacer.currentSpace === hugeBaby.currentSpace + num && arrayRacer !== hugeBaby) {
                         console.log(hugeBaby.name + "'s " + hugeBaby.abilityName + " stops " + arrayRacer.name + " from being on the same space.");
+                        addHistoryText(hugeBaby.name + "'s " + hugeBaby.abilityName + " stops " + arrayRacer.name + " from being on the same space.");
                         arrayRacer.move(-1, false);
                     }
                 })
@@ -253,6 +286,24 @@ class Racer {
     // Check to see if my ability triggered while moving or when I stopped
     myMoveAbility() {
 
+    }
+    checkWin() {
+        let racer = this;
+        if (firstPlace === "") {
+            firstPlace = racer;
+            this.placement = "first";
+        } else {
+            secondPlace = racer;
+            this.placement = "second";
+            
+            isRaceOver = true;
+        }
+
+        this.hasFinishedRace = true;
+    }
+    removeFromRace() {
+        let name = this.name;
+        racers = racers.filter(racer => racer.name !== name);
     }
     // Check to see if any abilities triggered while racer was moving or when they stopped moving
     checkOtherMoveAbilities(movingRacer, currentSpace, startingSpace, isMainMove) {
@@ -342,6 +393,7 @@ class Racer {
     trip() {
         this.isTripped = true;
         console.log(this.name + " trips.");
+        addHistoryText(this.name + " trips.");
 
         let racerImage = document.querySelectorAll("[data-name='" + this.name + "']");
         racerImage = racerImage[0];
@@ -350,6 +402,7 @@ class Racer {
     }
     standUp() {
         console.log(this.name + " stands up and skips their main move.");
+        addHistoryText(this.name + " stands up and skips their main move.");
         this.isTripped = false;
 
         let racerImage = document.querySelectorAll("[data-name='" + this.name + "']");
@@ -378,7 +431,6 @@ class Racer {
         let legItTargetArray = [];
         if (racers.includes(babaYaga)) {
             if (movingRacer === babaYaga) {
-                console.log("1");
                 racers.forEach(function(arrayRacer) {
                     if (arrayRacer.currentSpace === babaYaga.currentSpace && arrayRacer !== babaYaga) {
                         activateLegIt = true;
@@ -439,6 +491,7 @@ class Alchemist extends Racer {
         let numberRolled = Math.floor(Math.random() * 6) + 1;
         let numberAsString = JSON.stringify(numberRolled);
         console.log(this.name + " rolls a " + numberRolled + ".");
+        addHistoryText(this.name + " rolls a " + numberRolled + ".");
 
         if (die.classList.contains("low")) {
             die.className = "";
@@ -452,6 +505,7 @@ class Alchemist extends Racer {
 
          if (numberRolled < 3) {
             console.log(this.name + " uses " + this.abilityName + " to turn the " + numberRolled + " into a 4.");
+            addHistoryText(his.name + " uses " + this.abilityName + " to turn the " + numberRolled + " into a 4.");
             numberRolled = 4;
         }
 
@@ -462,7 +516,8 @@ let alchemist = new Alchemist("Alchemist", "Transmute 'n' Scoot");
 
 class BabaYaga extends Racer {
     legIt(racer) {
-        console.log(this.name + "'s " + this.abilityName + " causes " + racer.name + " to trip.")
+        console.log(this.name + "'s " + this.abilityName + " causes " + racer.name + " to trip.");
+        addHistoryText(this.name + "'s " + this.abilityName + " causes " + racer.name + " to trip.");
         racer.trip();
     }
 };
@@ -470,7 +525,8 @@ let babaYaga = new BabaYaga("Baba Yaga", "Leg It");
 
 class Banana extends Racer {
     theSlip(racer) {
-        console.log(this.name + "'s " + this.abilityName + " causes " + racer.name + " to trip.")
+        console.log(this.name + "'s " + this.abilityName + " causes " + racer.name + " to trip.");
+        addHistoryText(this.name + "'s " + this.abilityName + " causes " + racer.name + " to trip.");
         racer.trip();
     }
 };
@@ -480,9 +536,11 @@ class Blimp extends Racer {
     diceMod() {
         if (this.currentSpace < 15) {
             console.log(this.name + "'s " + this.abilityName + " adds 3 to their move.");
+            addHistoryText(this.name + "'s " + this.abilityName + " adds 3 to their move.");
             return 3;
         } else {
             console.log(this.name + "'s " + this.abilityName + " subtracts 1 from their move.");
+            addHistoryText(this.name + "'s " + this.abilityName + " subtracts 1 from their move.");
             return -1;
         }
     }
@@ -510,6 +568,7 @@ class Centaur extends Racer {
 
     hoofwhack(racer) {
         console.log(centaur.name + " uses " + centaur.abilityName + " to kick " + racer.name + " back 2 spaces.");
+        addHistoryText(centaur.name + " uses " + centaur.abilityName + " to kick " + racer.name + " back 2 spaces.");
         racer.move(-2, false);
     }
 }
@@ -519,6 +578,7 @@ class Cheerleader extends Racer {
     beforeMainMove() {
         let doesAbilityActivate = false;
         console.log(cheerleader.name + "'s " + this.abilityName + " causes all racers in last place to move 2 spaces.");
+        addHistoryText(cheerleader.name + "'s " + this.abilityName + " causes all racers in last place to move 2 spaces.");
         racers.forEach(function(racer) {
             if (racer.isInLast) {
                 racer.move(2, false);
@@ -528,6 +588,7 @@ class Cheerleader extends Racer {
 
         if (doesAbilityActivate) {
             console.log(cheerleader.name + "'s " + this.abilityName + " causes Cheerleader to move 1 space.");
+            addHistoryText(cheerleader.name + "'s " + this.abilityName + " causes Cheerleader to move 1 space.");
             cheerleader.move(1, false);
         }
     }
@@ -537,6 +598,7 @@ let cheerleader = new Cheerleader("Cheerleader", "Rah Rah");
 class Coach extends Racer {
     goodHustle() {
         console.log(coach.name + "'s " + this.abilityName + " adds 1 to their move.");
+        addHistoryText(coach.name + "'s " + this.abilityName + " adds 1 to their move.");
         return 1;
     }
 }
@@ -553,18 +615,23 @@ let dicemonger = new Dicemonger("Dicemonger", "Dicey Deals");
 class Duelist extends Racer {
     duel(racer) {
         console.log("Duelist initiates a DUEL against " + racer.name + ".");
+        addHistoryText("Duelist initiates a DUEL against " + racer.name + ".");
 
         let duelistRoll = Math.floor(Math.random() * 6) + 1;
         console.log(duelist.name + " rolls a " + duelistRoll + " for the duel.");
+        addHistoryText(duelist.name + " rolls a " + duelistRoll + " for the duel.");
 
         let otherRoll = Math.floor(Math.random() * 6) + 1;
         console.log(racer.name + " rolls a " + otherRoll + " for the duel.");
+        addHistoryText(racer.name + " rolls a " + otherRoll + " for the duel.");
 
         if (duelistRoll >= otherRoll) {
-            console.log(duelist.name + " wins the duel and moves 2 spaces.");
+            console.log(duelist.name + " wins the duel.");
+            addHistoryText(duelist.name + " wins the duel.");
             duelist.move(2, false);
         } else {
-            console.log(racer.name + " wins the duel and moves 2 spaces.");
+            console.log(racer.name + " wins the duel.");
+            addHistoryText(racer.name + " wins the duel.");
             racer.move(2, false);
         }
     }
@@ -586,6 +653,7 @@ let genius = new Genius("Genius", "Think Good");
 class Gunk extends Racer {
     goopEm() {
         console.log(gunk.name + "'s " + this.abilityName + " subtracts 1 from their move.");
+        addHistoryText(gunk.name + "'s " + this.abilityName + " subtracts 1 from their move.");
         return -1;
     }
 }
@@ -595,11 +663,13 @@ class Hare extends Racer {
     beforeMainMove() {
         if (this.isInLead && this.isAlone) {
             console.log(this.name + "'s " + this.abilityName + " makes them skip their main move.");
+            addHistoryText(this.name + "'s " + this.abilityName + " makes them skip their main move.");
             this.skipMainMove = true;
         }
     }
     diceMod() {
         console.log(this.name + "'s " + this.abilityName + " adds 2 to their move.");
+        addHistoryText(this.name + "'s " + this.abilityName + " adds 2 to their move.");
 
         let diceMod = 2;
 
@@ -611,6 +681,7 @@ let hare = new Hare("Hare", "Hubris");
 class Heckler extends Racer {
     schadenfreude(racer) {
         console.log(heckler.name + " uses " + this.abilityName + " towards " + racer.name + " to move 2 spaces.");
+        addHistoryText(heckler.name + " uses " + this.abilityName + " towards " + racer.name + " to move 2 spaces.");
         heckler.move(2, false);
     }
 }
@@ -619,6 +690,7 @@ let heckler = new Heckler("Heckler", "Schadenfreude");
 class HugeBaby extends Racer {
     reallyHuge() {
         console.log(this.name + "'s " + this.abilityName + " stops them from being on the same space.");
+        addHistoryText(this.name + "'s " + this.abilityName + " stops them from being on the same space.");
         return -1;
     }
 }
@@ -642,6 +714,7 @@ class Hypnotist extends Racer {
         })
 
         console.log(this.name + "'s " + this.abilityName + " warps " + racerInLead.name + " to their space.");
+        addHistoryText(this.name + "'s " + this.abilityName + " warps " + racerInLead.name + " to their space.");
         racerInLead.warp(hypnotist.currentSpace);
     }
 }
@@ -650,6 +723,7 @@ let hypnotist = new Hypnotist("Hypnotist", "Hssssst");
 class Inchworm extends Racer {
     wriggle(racer) {
         console.log(inchworm.name + "'s Wriggle stops " + racer.name + " from moving.");
+        addHistoryText(inchworm.name + "'s Wriggle stops " + racer.name + " from moving.");
         inchworm.move(1, false);
         setNextTurn();
     }
@@ -659,6 +733,7 @@ let inchworm = new Inchworm("Inchworm", "Wriggle");
 class Lackey extends Racer {
     veryGoodSire() {
         console.log(lackey.name + "'s Very Good Sire lets him move.");
+        addHistoryText(lackey.name + "'s Very Good Sire lets him move.");
         lackey.move(2, false);
     }
 }
@@ -685,6 +760,7 @@ class Leaptoad extends Racer {
 
         if (spacesSkipped !== 0) {
             console.log(leaptoad.name + "'s " + this.abilityName + " lets them skip over " + spacesSkipped + " spaces.");
+            addHistoryText(leaptoad.name + "'s " + this.abilityName + " lets them skip over " + spacesSkipped + " spaces.");
         }
 
         return spacesSkipped;
@@ -695,12 +771,13 @@ let leaptoad = new Leaptoad("Leaptoad", "Jumpfrog");
 class Romantic extends Racer {
     ahLove(racer1, racer2) {
         console.log(romantic.name + "'s Ah, Love! lets her move because " + racer1.name + " and " + racer2.name + " are alone on a space together.");
+        addHistoryText(romantic.name + "'s Ah, Love! lets her move because " + racer1.name + " and " + racer2.name + " are alone on a space together.");
         romantic.move(2, false);
     }
 }
 let romantic = new Romantic("Romantic", "Ah, Love!");
 
-let racers = [hugeBaby, banana, duelist, babaYaga, dicemonger];
+let racers = [blimp, heckler, romantic, inchworm];
 let numberOfRacers = racers.length;
 let racerWidth = 100 / numberOfRacers;
 let spaces = document.querySelectorAll(".track__space");
@@ -708,6 +785,7 @@ let spaces = document.querySelectorAll(".track__space");
 init()
 function init() {
     putRacersOnTrack();
+    placeCards();
     setNextTurn();
 }
 
@@ -720,6 +798,17 @@ function putRacersOnTrack() {
 
         document.querySelector(".js_start").appendChild(newImage);
     });
+}
+
+function placeCards() {
+    racers.forEach(function(racer) {
+        let newImage = document.createElement('img');
+        newImage.src = racer.cardSrc;
+        newImage.classList.add("card");
+        newImage.dataset.name = racer.name;
+
+        document.querySelector(".js_cards").appendChild(newImage);
+    })
 }
 
 let isDiceRolling = false;
@@ -750,4 +839,31 @@ function setNextTurn() {
     }
 
     racers[univCurrentRacerIndex-1].setMyTurn();
+}
+
+const callback = function(mutationsList, observer) {
+        for (const mutation of mutationsList) {
+            if (mutation.type === 'attributes') {
+                // console.log('The ' + mutation.attributeName + ' attribute was modified.');
+            } else if (mutation.type === 'childList') {
+                // console.log('A child node has been added or removed.');
+                // historyText.lastElementChild.scrollIntoView(false);
+            } else if (mutation.type === 'characterData') {
+                // console.log('The text content of a node has changed.');
+            }
+        }
+};
+const observer = new MutationObserver(callback);
+const targetNode = historyText; // Or any other way to select the element
+const config = { attributes: true, childList: true, subtree: true, characterData: true };
+
+observer.observe(targetNode, config);
+
+function addHistoryText(text) {
+    let newParagraph = document.createElement('p');
+    newParagraph.textContent = text;
+    historyText.appendChild(newParagraph);
+
+    let newHr = document.createElement('hr');
+    historyText.appendChild(newHr);
 }
