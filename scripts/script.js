@@ -8,6 +8,7 @@ let historyText = document.querySelector(".js_history-text");
 let firstPlace = "";
 let secondPlace = "";
 let isRaceOver = false;
+let travelTime = 1000;
 
 class Racer {
     constructor(name, abilityName) {
@@ -191,47 +192,88 @@ class Racer {
             console.log(this.name + " moves " + totalMovement + " spaces. Their current space is " + this.currentSpace + ".");
             addHistoryText(this.name + " moves " + totalMovement + " spaces. Their current space is " + this.currentSpace + ".");
 
-            let racerImage = document.querySelectorAll("[data-name='" + this.name + "']");
-            racerImage = racerImage[0];
-            racerImage.remove();
+            this.placeRacer(startingSpace, this.currentSpace);
 
-            this.placeRacer();
+            setTimeout(function() {
+                // if (racer.currentSpace >= 11 && racer.currentSpace <= 20) {
+                //     racer.faceLeft();
+                // } else {
+                //     racer.faceRight();
+                // }
 
-            if (this.currentSpace >= 11 && this.currentSpace <= 20) {
-                this.faceLeft();
-            } else {
-                this.faceRight();
-            }
+                racer.checkOtherMoveAbilities(racer, racer.currentSpace, startingSpace, isMainMove);
 
-            this.checkOtherMoveAbilities(racer, this.currentSpace, startingSpace, isMainMove);
-
-            this.updateStatus();
+                racer.updateStatus();
+            }, travelTime);
         }
 
-        if (!isRaceOver) {
-            if (isMainMove) {
+        setTimeout(function() {
+            if (!isRaceOver && isMainMove) {
                 setNextTurn();
             }
-        }
+        }, travelTime);
     }
-    placeRacer() {
-        let newImage = document.createElement('img');
-        newImage.src = this.src;
-        newImage.classList.add("racer");
-        if (this.isTripped) {
-            newImage.classList.add("racer--tripped");
-        }
-        if (newImage.src.includes("baby") && this.currentSpace !== 0 && this.currentSpace !== 30) {
-            newImage.classList.add("racer--full-height");
+    placeRacer(startingSpace, currentSpace) {
+        // let newImage = document.createElement('img');
+        // newImage.src = this.src;
+        // newImage.classList.add("racer");
+        // if (this.isTripped) {
+        //     newImage.classList.add("racer--tripped");
+        // }
+        // if (newImage.src.includes("baby") && this.currentSpace !== 0 && this.currentSpace !== 30) {
+        //     newImage.classList.add("racer--full-height");
+        // } else {
+        //     newImage.classList.remove("racer--full-height");
+        // }
+        // newImage.dataset.name = this.name;
+
+        // let spaceToPlace = document.querySelector("[data-space='" + this.currentSpace + "']");
+
+        // spaceToPlace.appendChild(newImage);
+
+        let totalMovement = currentSpace - startingSpace;
+        if (totalMovement === 0) return;
+        let isMovingForward = totalMovement >= 0 ? true : false;
+        let moveInterval = travelTime / totalMovement;
+        let tempCurrentSpace = startingSpace;
+        let racer = this;
+
+
+        if (isMovingForward) {
+            for (let i = 0; i < totalMovement; i++) {
+                setTimeout(() => {
+                    let tempSpace = tempCurrentSpace + i + 1;
+                    let newImage = document.createElement('img');
+                    newImage.src = racer.src;
+                    newImage.classList.add("racer");
+                    newImage.dataset.name = racer.name;
+                    if (racer.isTripped) {
+                        newImage.classList.add("racer--tripped");
+                    }
+                    if (racer.currentSpace >= 11 && racer.currentSpace <= 20) {
+                        newImage.classList.add("racer--face-left");
+                    } else {
+                        newImage.classList.remove("racer--face-left");
+                    }
+                    if (newImage.src.includes("baby") && racer.currentSpace !== 0 && racer.currentSpace !== 30) {
+                        newImage.classList.add("racer--full-height");
+                    } else {
+                        newImage.classList.remove("racer--full-height");
+                    }
+                    let spaceToPlace = document.querySelector("[data-space='" + tempSpace + "']");
+
+                    let racerImages = document.querySelectorAll(".racer[data-name='" + racer.name + "']");
+                    let racerImage = racerImages[0];
+                    racerImage.remove();
+
+                    spaceToPlace.appendChild(newImage);
+                }, i * moveInterval);
+            }
         } else {
-            newImage.classList.remove("racer--full-height");
+            for (let index = 0; index < totalMovement; index--) {
+                const element = array[index];
+            }
         }
-        newImage.dataset.name = this.name;
-
-        let spaceToPlace = document.querySelector("[data-space='" + this.currentSpace + "']");
-        // spaceToPlace = spaceToPlace[0];
-
-        spaceToPlace.appendChild(newImage);
     }
     faceLeft() {
         let racerImage = document.querySelectorAll("[data-name='" + this.name + "']");
@@ -777,7 +819,9 @@ class Romantic extends Racer {
 }
 let romantic = new Romantic("Romantic", "Ah, Love!");
 
-let racers = [blimp, heckler, romantic, inchworm];
+// STARTING CODE
+
+let racers = [dicemonger, blimp, inchworm, duelist, romantic, hare];
 let numberOfRacers = racers.length;
 let racerWidth = 100 / numberOfRacers;
 let spaces = document.querySelectorAll(".track__space");
@@ -842,16 +886,16 @@ function setNextTurn() {
 }
 
 const callback = function(mutationsList, observer) {
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'attributes') {
-                // console.log('The ' + mutation.attributeName + ' attribute was modified.');
-            } else if (mutation.type === 'childList') {
-                // console.log('A child node has been added or removed.');
-                // historyText.lastElementChild.scrollIntoView(false);
-            } else if (mutation.type === 'characterData') {
-                // console.log('The text content of a node has changed.');
-            }
+    for (const mutation of mutationsList) {
+        if (mutation.type === 'attributes') {
+            // console.log('The ' + mutation.attributeName + ' attribute was modified.');
+        } else if (mutation.type === 'childList') {
+            // console.log('A child node has been added or removed.');
+            // historyText.lastElementChild.scrollIntoView(false);
+        } else if (mutation.type === 'characterData') {
+            // console.log('The text content of a node has changed.');
         }
+    }
 };
 const observer = new MutationObserver(callback);
 const targetNode = historyText; // Or any other way to select the element
@@ -862,8 +906,8 @@ observer.observe(targetNode, config);
 function addHistoryText(text) {
     let newParagraph = document.createElement('p');
     newParagraph.textContent = text;
-    historyText.appendChild(newParagraph);
+    historyText.prepend(newParagraph);
 
     let newHr = document.createElement('hr');
-    historyText.appendChild(newHr);
+    historyText.prepend(newHr);
 }
