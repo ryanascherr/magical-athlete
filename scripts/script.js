@@ -250,7 +250,7 @@ class Racer {
                     if (racer.isTripped) {
                         newImage.classList.add("racer--tripped");
                     }
-                    if (racer.currentSpace >= 11 && racer.currentSpace <= 20) {
+                    if (tempSpace >= 11 && tempSpace <= 20) {
                         newImage.classList.add("racer--face-left");
                     } else {
                         newImage.classList.remove("racer--face-left");
